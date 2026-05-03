@@ -38,3 +38,11 @@ Este DER preliminar descreve as entidades principais e seus relacionamentos impl
 ## Observacao
 
 As tabelas e constraints foram definidas em src/main/resources/db/migration/V1__create_core_schema.sql.
+
+## Validacao em banco real de teste
+
+O DER foi confrontado com um PostgreSQL local em execucao durante os testes de integracao da classe
+src/test/java/br/com/raizesdonordeste/backend/SchemaValidationIntegrationTests.java.
+
+Nessa validacao, as migrations V1 e V2 executaram a partir de schema vazio e as tabelas/relacionamentos
+foram conferidos via information_schema e metadata JDBC.
