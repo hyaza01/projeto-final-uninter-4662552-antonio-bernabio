@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -17,9 +16,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 
@@ -27,7 +24,6 @@ import br.com.raizesdonordeste.backend.domain.enums.CanalPedido;
 import br.com.raizesdonordeste.backend.domain.enums.PerfilUsuario;
 import br.com.raizesdonordeste.backend.domain.enums.StatusPagamento;
 import br.com.raizesdonordeste.backend.domain.enums.StatusPedido;
-import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 
 @SpringBootTest
 @TestPropertySource(properties = {
@@ -35,6 +31,7 @@ import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 	"spring.jpa.hibernate.ddl-auto=validate",
 	"spring.jpa.open-in-view=false"
 })
+@Import(EmbeddedPostgresTestConfig.class)
 class SchemaValidationIntegrationTests {
 
 	private static final Set<String> TABELAS_OBRIGATORIAS = Set.of(
@@ -116,18 +113,4 @@ class SchemaValidationIntegrationTests {
 		assertFalse(Set.of(StatusPagamento.values()).isEmpty());
 	}
 
-	@TestConfiguration
-	static class EmbeddedPostgresConfig {
-
-		@Bean(destroyMethod = "close")
-		EmbeddedPostgres embeddedPostgres() throws IOException {
-			return EmbeddedPostgres.builder().setPort(0).start();
-		}
-
-		@Bean
-		@Primary
-		DataSource dataSource(EmbeddedPostgres embeddedPostgres) {
-			return embeddedPostgres.getPostgresDatabase();
-		}
-	}
 }

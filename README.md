@@ -4,7 +4,7 @@ API REST para a rede de lanchonetes Raizes do Nordeste.
 
 ## Etapa atual
 
-Etapa 2 concluida: modelo de dominio inicial, repositorios e migrations.
+Etapa 3 concluida: autenticacao JWT, controle de perfis e rotas protegidas.
 
 ## Stack
 
@@ -16,7 +16,7 @@ Etapa 2 concluida: modelo de dominio inicial, repositorios e migrations.
 - PostgreSQL
 - Flyway
 - Bean Validation
-- JWT (dependencias preparadas)
+- JWT
 - Swagger/OpenAPI (dependencia preparada)
 - JUnit
 
@@ -49,6 +49,24 @@ src/main/java/br/com/raizesdonordeste/backend/
 - Engine de migration: Flyway
 - Migration principal: `src/main/resources/db/migration/V1__create_core_schema.sql`
 - Seed inicial (opcional): `src/main/resources/db/migration/V2__seed_initial_data.sql`
+
+## Autenticacao e autorizacao (Etapa 3)
+
+### Endpoints
+
+- `POST /api/v1/auth/register` (publico)
+- `POST /api/v1/auth/login` (publico)
+- `GET /api/v1/auth/me` (autenticado)
+- `GET /api/v1/private/ping` (autenticado)
+- `GET /api/v1/admin/ping` (somente `ADMIN`)
+
+### Usuarios seed de teste
+
+- `admin@raizes.local` / `Admin@123` (`ADMIN`)
+- `gerente@raizes.local` / `Gerente@123` (`GERENTE`)
+- `atendente@raizes.local` / `Atendente@123` (`ATENDENTE`)
+- `cozinha@raizes.local` / `Cozinha@123` (`COZINHA`)
+- `cliente@raizes.local` / `Cliente@123` (`CLIENTE`)
 
 ## Como executar localmente
 
@@ -104,6 +122,32 @@ WHERE tc.constraint_type = 'FOREIGN KEY'
 ORDER BY tc.table_name, kcu.column_name;
 ```
 
+## Validacoes recomendadas da Etapa 3
+
+1. Cadastro de usuario:
+
+```http
+POST /api/v1/auth/register
+```
+
+2. Login e token JWT:
+
+```http
+POST /api/v1/auth/login
+```
+
+3. Rota protegida sem token deve retornar 401:
+
+```http
+GET /api/v1/private/ping
+```
+
+4. Rota de admin com usuario cliente deve retornar 403:
+
+```http
+GET /api/v1/admin/ping
+```
+
 ## DER preliminar
 
 Consulte o arquivo `docs/der-preliminar.md` para uma visao textual dos relacionamentos mapeados nesta etapa.
@@ -122,6 +166,6 @@ Resposta esperada:
 }
 ```
 
-## Observacao importante da Etapa 2
+## Observacao importante da Etapa 3
 
-Nesta etapa, a aplicacao esta configurada para exigir PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). Sem o banco em execucao, a inicializacao falha por conexao recusada, o que confirma que o projeto esta realmente conectado a DataSource/JPA/Flyway.
+A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O acesso autenticado agora requer JWT valido no header `Authorization: Bearer <token>`.
