@@ -4,7 +4,7 @@ API REST para a rede de lanchonetes Raizes do Nordeste.
 
 ## Etapa atual
 
-Etapa 3 concluida: autenticacao JWT, controle de perfis e rotas protegidas.
+Etapa 4 concluida: catalogo publico de produtos e consulta de estoque por perfis internos.
 
 ## Stack
 
@@ -59,6 +59,15 @@ src/main/java/br/com/raizesdonordeste/backend/
 - `GET /api/v1/auth/me` (autenticado)
 - `GET /api/v1/private/ping` (autenticado)
 - `GET /api/v1/admin/ping` (somente `ADMIN`)
+
+## Catalogo e estoque (Etapa 4)
+
+### Endpoints
+
+- `GET /api/v1/catalogo/produtos` (publico)
+- `GET /api/v1/catalogo/produtos/{produtoId}` (publico)
+- `GET /api/v1/estoque/unidades/{unidadeId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
+- `GET /api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
 
 ### Usuarios seed de teste
 
@@ -148,6 +157,44 @@ GET /api/v1/private/ping
 GET /api/v1/admin/ping
 ```
 
+## Validacoes recomendadas da Etapa 4
+
+1. Catalogo publico sem token:
+
+```http
+GET /api/v1/catalogo/produtos
+```
+
+2. Filtro por categoria:
+
+```http
+GET /api/v1/catalogo/produtos?categoria=LANCHE
+```
+
+3. Estoque sem token deve retornar 401:
+
+```http
+GET /api/v1/estoque/unidades/1/produtos/1
+```
+
+4. Estoque com token de CLIENTE deve retornar 403.
+
+5. Estoque com token de GERENTE deve retornar 200.
+
+## Servico de commit agendado para 18h
+
+Para agendar commit automatico local somente as 18h de hoje:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-hoje-18h.ps1
+```
+
+Script executado no horario:
+
+- `.\tools\commit-agendado-18h.ps1`
+
+Observacao: o agendamento faz `git add .` e `git commit` somente se houver alteracoes pendentes.
+
 ## DER preliminar
 
 Consulte o arquivo `docs/der-preliminar.md` para uma visao textual dos relacionamentos mapeados nesta etapa.
@@ -166,6 +213,6 @@ Resposta esperada:
 }
 ```
 
-## Observacao importante da Etapa 3
+## Observacao importante da Etapa 4
 
-A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O acesso autenticado agora requer JWT valido no header `Authorization: Bearer <token>`.
+A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo e publico, mas os endpoints de estoque exigem JWT valido no header `Authorization: Bearer <token>` com perfil interno autorizado.

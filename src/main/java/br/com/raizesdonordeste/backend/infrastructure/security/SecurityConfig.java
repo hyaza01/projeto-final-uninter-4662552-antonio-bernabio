@@ -41,10 +41,12 @@ public class SecurityConfig {
 					"/actuator/info",
 					"/api/v1/auth/register",
 					"/api/v1/auth/login",
+					"/api/v1/catalogo/**",
 					"/swagger-ui/**",
 					"/swagger-ui.html",
 					"/v3/api-docs/**"
 				).permitAll()
+				.requestMatchers("/api/v1/estoque/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/v1/private/**").authenticated()
 				.anyRequest().authenticated())
