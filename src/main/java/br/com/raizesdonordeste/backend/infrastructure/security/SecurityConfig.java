@@ -2,6 +2,7 @@ package br.com.raizesdonordeste.backend.infrastructure.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -46,6 +47,8 @@ public class SecurityConfig {
 					"/swagger-ui.html",
 					"/v3/api-docs/**"
 				).permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos/me/**").hasRole("CLIENTE")
 				.requestMatchers("/api/v1/estoque/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/v1/private/**").authenticated()

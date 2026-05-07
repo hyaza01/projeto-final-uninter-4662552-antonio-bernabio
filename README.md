@@ -4,7 +4,7 @@ API REST para a rede de lanchonetes Raizes do Nordeste.
 
 ## Etapa atual
 
-Etapa 4 concluida: catalogo publico de produtos e consulta de estoque por perfis internos.
+Etapa 5 concluida: criacao e consulta de pedidos pelo cliente com baixa automatica de estoque.
 
 ## Stack
 
@@ -68,6 +68,14 @@ src/main/java/br/com/raizesdonordeste/backend/
 - `GET /api/v1/catalogo/produtos/{produtoId}` (publico)
 - `GET /api/v1/estoque/unidades/{unidadeId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
 - `GET /api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
+
+## Pedidos do cliente (Etapa 5)
+
+### Endpoints
+
+- `POST /api/v1/pedidos` (`CLIENTE`)
+- `GET /api/v1/pedidos/me` (`CLIENTE`)
+- `GET /api/v1/pedidos/me/{pedidoId}` (`CLIENTE`)
 
 ### Usuarios seed de teste
 
@@ -181,6 +189,27 @@ GET /api/v1/estoque/unidades/1/produtos/1
 
 5. Estoque com token de GERENTE deve retornar 200.
 
+## Validacoes recomendadas da Etapa 5
+
+1. Criacao de pedido com token de CLIENTE:
+
+```http
+POST /api/v1/pedidos
+```
+
+2. Criacao de pedido sem token deve retornar 401.
+
+3. Criacao de pedido com token de perfil interno deve retornar 403.
+
+4. Pedido com quantidade acima do estoque deve retornar 409.
+
+5. Consulta de pedidos do cliente:
+
+```http
+GET /api/v1/pedidos/me
+GET /api/v1/pedidos/me/{pedidoId}
+```
+
 ## Servico de commit agendado para 18h
 
 Para agendar commit automatico local somente as 18h de hoje:
@@ -213,6 +242,6 @@ Resposta esperada:
 }
 ```
 
-## Observacao importante da Etapa 4
+## Observacao importante da Etapa 5
 
-A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo e publico, mas os endpoints de estoque exigem JWT valido no header `Authorization: Bearer <token>` com perfil interno autorizado.
+A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo segue publico, os endpoints de estoque exigem perfil interno autorizado e os endpoints de pedidos exigem token JWT de cliente autenticado.
