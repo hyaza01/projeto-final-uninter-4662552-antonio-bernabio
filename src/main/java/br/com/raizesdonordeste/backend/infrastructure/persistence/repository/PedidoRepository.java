@@ -10,9 +10,16 @@ import br.com.raizesdonordeste.backend.domain.model.Pedido;
 
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
+	@Override
+	@EntityGraph(attributePaths = {"cliente", "unidade", "itens", "itens.produto"})
+	Optional<Pedido> findById(Long id);
+
 	@EntityGraph(attributePaths = {"cliente", "unidade", "itens", "itens.produto"})
 	List<Pedido> findByClienteIdOrderByCreatedAtDesc(Long clienteId);
 
 	@EntityGraph(attributePaths = {"cliente", "unidade", "itens", "itens.produto"})
 	Optional<Pedido> findByIdAndClienteId(Long id, Long clienteId);
+
+	@EntityGraph(attributePaths = {"cliente", "unidade", "itens", "itens.produto"})
+	List<Pedido> findByUnidadeIdOrderByCreatedAtDesc(Long unidadeId);
 }

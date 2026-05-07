@@ -4,7 +4,7 @@ API REST para a rede de lanchonetes Raizes do Nordeste.
 
 ## Etapa atual
 
-Etapa 5 concluida: criacao e consulta de pedidos pelo cliente com baixa automatica de estoque.
+Etapa 6 concluida: operacao interna de pedidos com transicao de status e estorno de estoque no cancelamento.
 
 ## Stack
 
@@ -76,6 +76,13 @@ src/main/java/br/com/raizesdonordeste/backend/
 - `POST /api/v1/pedidos` (`CLIENTE`)
 - `GET /api/v1/pedidos/me` (`CLIENTE`)
 - `GET /api/v1/pedidos/me/{pedidoId}` (`CLIENTE`)
+
+## Operacao de pedidos (Etapa 6)
+
+### Endpoints
+
+- `GET /api/v1/pedidos/unidade/{unidadeId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
+- `PATCH /api/v1/pedidos/{pedidoId}/status` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
 
 ### Usuarios seed de teste
 
@@ -210,9 +217,29 @@ GET /api/v1/pedidos/me
 GET /api/v1/pedidos/me/{pedidoId}
 ```
 
-## Servico de commit agendado para 18h
+## Validacoes recomendadas da Etapa 6
 
-Para agendar commit automatico local somente as 18h de hoje:
+1. Listar pedidos por unidade com token interno:
+
+```http
+GET /api/v1/pedidos/unidade/{unidadeId}
+```
+
+2. Atualizar status de `RECEBIDO` para `EM_PREPARO`:
+
+```http
+PATCH /api/v1/pedidos/{pedidoId}/status
+```
+
+3. Tentar transicao invalida (ex.: `RECEBIDO` para `PRONTO`) deve retornar 409.
+
+4. Cancelar pedido deve estornar o estoque automaticamente.
+
+5. Cliente tentando acessar endpoints operacionais deve retornar 403.
+
+## Servicos de commit agendado
+
+### Agendamento para 18h de hoje
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-hoje-18h.ps1
@@ -220,9 +247,19 @@ powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-hoje-18h.ps1
 
 Script executado no horario:
 
-- `.\tools\commit-agendado-18h.ps1`
+- `./tools/commit-agendado-18h.ps1`
 
-Observacao: o agendamento faz `git add .` e `git commit` somente se houver alteracoes pendentes.
+### Agendamento para daqui a 3 horas (Etapa 6)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-daqui-3h.ps1
+```
+
+Script executado no horario:
+
+- `./tools/commit-agendado-etapa6-3h.ps1`
+
+Observacao: os scripts de agendamento fazem commit e push automatico para `origin/master`. O script da Etapa 6 comita apenas os arquivos da etapa para evitar incluir arquivos nao relacionados.
 
 ## DER preliminar
 
@@ -242,6 +279,6 @@ Resposta esperada:
 }
 ```
 
-## Observacao importante da Etapa 5
+## Observacao importante da Etapa 6
 
-A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo segue publico, os endpoints de estoque exigem perfil interno autorizado e os endpoints de pedidos exigem token JWT de cliente autenticado.
+A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo segue publico, os endpoints de estoque exigem perfil interno autorizado, os endpoints `/api/v1/pedidos/me` exigem perfil `CLIENTE` e os endpoints operacionais de pedidos exigem perfil interno autorizado.

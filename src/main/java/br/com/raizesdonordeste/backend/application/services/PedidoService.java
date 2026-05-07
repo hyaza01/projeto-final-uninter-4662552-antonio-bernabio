@@ -3,6 +3,7 @@ package br.com.raizesdonordeste.backend.application.services;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -126,6 +127,39 @@ public class PedidoService {
 		return toResponse(pedido);
 	}
 
+	@Transactional(readOnly = true)
+	public List<PedidoResponse> listarPedidosPorUnidade(Long unidadeId) {
+		unidadeRepository.findByIdAndAtivaTrue(unidadeId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unidade nao encontrada"));
+
+		return pedidoRepository.findByUnidadeIdOrderByCreatedAtDesc(unidadeId).stream()
+			.map(this::toResponse)
+			.toList();
+	}
+
+	@Transactional
+	public PedidoResponse atualizarStatus(Long pedidoId, StatusPedido novoStatus) {
+		Pedido pedido = pedidoRepository.findById(pedidoId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido nao encontrado"));
+
+		StatusPedido statusAtual = pedido.getStatus();
+		if (statusAtual == novoStatus) {
+			return toResponse(pedido);
+		}
+
+		if (!isTransitionAllowed(statusAtual, novoStatus)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Transicao de status invalida");
+		}
+
+		if (novoStatus == StatusPedido.CANCELADO) {
+			estornarEstoquePorCancelamento(pedido);
+		}
+
+		pedido.setStatus(novoStatus);
+		Pedido salvo = pedidoRepository.save(pedido);
+		return toResponse(salvo);
+	}
+
 	private Cliente findClienteByEmail(String email) {
 		Usuario usuario = usuarioRepository.findByEmail(normalizeEmail(email))
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario nao encontrado"));
@@ -140,6 +174,51 @@ public class PedidoService {
 
 	private String normalizeEmail(String email) {
 		return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private boolean isTransitionAllowed(StatusPedido statusAtual, StatusPedido novoStatus) {
+		return switch (statusAtual) {
+			case AGUARDANDO_PAGAMENTO -> EnumSet.of(
+				StatusPedido.PAGAMENTO_APROVADO,
+				StatusPedido.PAGAMENTO_RECUSADO,
+				StatusPedido.CANCELADO
+			).contains(novoStatus);
+			case PAGAMENTO_APROVADO -> EnumSet.of(
+				StatusPedido.RECEBIDO,
+				StatusPedido.EM_PREPARO,
+				StatusPedido.CANCELADO
+			).contains(novoStatus);
+			case PAGAMENTO_RECUSADO -> novoStatus == StatusPedido.CANCELADO;
+			case RECEBIDO -> EnumSet.of(StatusPedido.EM_PREPARO, StatusPedido.CANCELADO).contains(novoStatus);
+			case EM_PREPARO -> EnumSet.of(StatusPedido.PRONTO, StatusPedido.CANCELADO).contains(novoStatus);
+			case PRONTO -> EnumSet.of(StatusPedido.ENTREGUE, StatusPedido.CANCELADO).contains(novoStatus);
+			case ENTREGUE, CANCELADO -> false;
+		};
+	}
+
+	private void estornarEstoquePorCancelamento(Pedido pedido) {
+		List<MovimentoEstoque> movimentos = new ArrayList<>();
+
+		for (PedidoItem item : pedido.getItens()) {
+			Estoque estoque = estoqueRepository.findByUnidadeIdAndProdutoId(
+				pedido.getUnidade().getId(),
+				item.getProduto().getId()
+			).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Estoque nao encontrado para estorno"));
+
+			estoque.setQuantidadeAtual(estoque.getQuantidadeAtual() + item.getQuantidade());
+
+			MovimentoEstoque movimento = new MovimentoEstoque();
+			movimento.setEstoque(estoque);
+			movimento.setPedido(pedido);
+			movimento.setTipo(TipoMovimentoEstoque.ENTRADA);
+			movimento.setQuantidade(item.getQuantidade());
+			movimento.setMotivo("Estorno por cancelamento do pedido " + pedido.getId());
+			movimentos.add(movimento);
+		}
+
+		if (!movimentos.isEmpty()) {
+			movimentoEstoqueRepository.saveAll(movimentos);
+		}
 	}
 
 	private PedidoResponse toResponse(Pedido pedido) {
