@@ -16,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -26,6 +25,7 @@ public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final AppUserDetailsService userDetailsService;
+	private final SecurityExceptionHandler securityExceptionHandler;
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,8 +33,8 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.exceptionHandling(handler -> handler
-				.authenticationEntryPoint((request, response, ex) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-				.accessDeniedHandler((request, response, ex) -> response.sendError(HttpServletResponse.SC_FORBIDDEN)))
+				.authenticationEntryPoint(securityExceptionHandler)
+				.accessDeniedHandler(securityExceptionHandler))
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(
 					"/api/v1/health",
@@ -48,7 +48,13 @@ public class SecurityConfig {
 					"/v3/api-docs/**"
 				).permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos/*/pagamentos/mock").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos/*/pagamento").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/pagamentos/*").hasAnyRole("CLIENTE", "ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos/me/**").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/fidelidade/**").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.PATCH, "/api/v1/fidelidade/**").hasRole("CLIENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos/unidade/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers(HttpMethod.PATCH, "/api/v1/pedidos/*/status").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers("/api/v1/estoque/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")

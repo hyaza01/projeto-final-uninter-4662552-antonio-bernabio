@@ -1,26 +1,19 @@
 # Projeto Final Back-end - Raizes do Nordeste
 
-API REST para a rede de lanchonetes Raizes do Nordeste.
+API REST para operacao de pedidos, pagamento mock, estoque, auditoria e fidelidade da rede Raizes do Nordeste.
 
-## Etapa atual
-
-Etapa 6 concluida: operacao interna de pedidos com transicao de status e estorno de estoque no cancelamento.
-
-## Stack
+## Tecnologias
 
 - Java 21
-- Spring Boot 3
-- Spring Web
-- Spring Security
-- Spring Data JPA
+- Spring Boot 3.3.5
+- Spring Web, Validation, Security, Data JPA, Actuator
 - PostgreSQL
 - Flyway
-- Bean Validation
-- JWT
-- Swagger/OpenAPI (dependencia preparada)
-- JUnit
+- JWT (JJWT)
+- OpenAPI/Swagger (springdoc)
+- JUnit 5 + MockMvc + Embedded PostgreSQL
 
-## Estrutura de pacotes
+## Arquitetura
 
 ```
 src/main/java/br/com/raizesdonordeste/backend/
@@ -43,242 +36,134 @@ src/main/java/br/com/raizesdonordeste/backend/
     exception/
 ```
 
-## Banco de dados e migrations
+## Funcionalidades implementadas
 
-- Banco: PostgreSQL
-- Engine de migration: Flyway
-- Migration principal: `src/main/resources/db/migration/V1__create_core_schema.sql`
-- Seed inicial (opcional): `src/main/resources/db/migration/V2__seed_initial_data.sql`
+- Cadastro, login e autenticacao JWT.
+- Autorizacao por perfil (`CLIENTE`, `ATENDENTE`, `COZINHA`, `GERENTE`, `ADMIN`).
+- Catalogo publico de produtos e consulta de estoque por unidade.
+- Criacao de pedidos com validacoes de unidade/produto/estoque e `canalPedido`.
+- Fluxo de pagamento mock (`APROVADO`/`RECUSADO`) por endpoint dedicado.
+- Baixa de estoque apenas com pagamento aprovado.
+- Operacao de status de pedido com regras de transicao.
+- Estorno de estoque no cancelamento apenas quando ja houve baixa previa.
+- Fidelidade com consentimento LGPD e historico de pontos.
+- Auditoria de eventos sensiveis (pedido, status, pagamento).
+- Filtros e paginacao de pedidos para cliente e operacao interna.
+- Swagger/OpenAPI e payload padrao de erro.
 
-## Autenticacao e autorizacao (Etapa 3)
+## Fluxo principal do pedido
 
-### Endpoints
+1. Cliente cria pedido (`AGUARDANDO_PAGAMENTO`).
+2. Cliente chama endpoint de pagamento mock.
+3. Se aprovado: pedido vai para `PAGAMENTO_APROVADO`, baixa estoque e gera pontos (se consentimento ativo).
+4. Se recusado: pedido vai para `PAGAMENTO_RECUSADO` e estoque nao muda.
+5. Equipe interna evolui status (`RECEBIDO`, `EM_PREPARO`, `PRONTO`, `ENTREGUE`) ou cancela.
 
-- `POST /api/v1/auth/register` (publico)
-- `POST /api/v1/auth/login` (publico)
-- `GET /api/v1/auth/me` (autenticado)
-- `GET /api/v1/private/ping` (autenticado)
-- `GET /api/v1/admin/ping` (somente `ADMIN`)
+## Setup local
 
-## Catalogo e estoque (Etapa 4)
+### 1) Configurar variaveis
 
-### Endpoints
+```bash
+cp .env.example .env
+```
 
-- `GET /api/v1/catalogo/produtos` (publico)
-- `GET /api/v1/catalogo/produtos/{produtoId}` (publico)
-- `GET /api/v1/estoque/unidades/{unidadeId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
-- `GET /api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
+No Windows PowerShell, crie o arquivo `.env` com base em `.env.example`.
 
-## Pedidos do cliente (Etapa 5)
-
-### Endpoints
-
-- `POST /api/v1/pedidos` (`CLIENTE`)
-- `GET /api/v1/pedidos/me` (`CLIENTE`)
-- `GET /api/v1/pedidos/me/{pedidoId}` (`CLIENTE`)
-
-## Operacao de pedidos (Etapa 6)
-
-### Endpoints
-
-- `GET /api/v1/pedidos/unidade/{unidadeId}` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
-- `PATCH /api/v1/pedidos/{pedidoId}/status` (`ADMIN`, `GERENTE`, `ATENDENTE`, `COZINHA`)
-
-### Usuarios seed de teste
-
-- `admin@raizes.local` / `Admin@123` (`ADMIN`)
-- `gerente@raizes.local` / `Gerente@123` (`GERENTE`)
-- `atendente@raizes.local` / `Atendente@123` (`ATENDENTE`)
-- `cozinha@raizes.local` / `Cozinha@123` (`COZINHA`)
-- `cliente@raizes.local` / `Cliente@123` (`CLIENTE`)
-
-## Como executar localmente
-
-1. Copie .env.example para .env e ajuste valores se necessario.
-2. Suba o banco local:
+### 2) Subir PostgreSQL
 
 ```bash
 docker compose up -d
 ```
 
-3. Inicie a aplicacao:
+### 3) Subir a aplicacao
+
+Linux/macOS:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-No Windows PowerShell:
+Windows PowerShell:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-## Validacoes recomendadas da Etapa 2
-
-1. Executar build:
+### 4) Executar testes
 
 ```bash
-./mvnw clean test
+./mvnw test
 ```
 
-2. Confirmar criacao das tabelas (apos startup com banco ativo):
-
-```sql
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-ORDER BY table_name;
-```
-
-3. Confirmar chaves estrangeiras:
-
-```sql
-SELECT tc.table_name,
-       kcu.column_name,
-       ccu.table_name AS referenced_table,
-       ccu.column_name AS referenced_column
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu
-  ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage ccu
-  ON ccu.constraint_name = tc.constraint_name
-WHERE tc.constraint_type = 'FOREIGN KEY'
-ORDER BY tc.table_name, kcu.column_name;
-```
-
-## Validacoes recomendadas da Etapa 3
-
-1. Cadastro de usuario:
-
-```http
-POST /api/v1/auth/register
-```
-
-2. Login e token JWT:
-
-```http
-POST /api/v1/auth/login
-```
-
-3. Rota protegida sem token deve retornar 401:
-
-```http
-GET /api/v1/private/ping
-```
-
-4. Rota de admin com usuario cliente deve retornar 403:
-
-```http
-GET /api/v1/admin/ping
-```
-
-## Validacoes recomendadas da Etapa 4
-
-1. Catalogo publico sem token:
-
-```http
-GET /api/v1/catalogo/produtos
-```
-
-2. Filtro por categoria:
-
-```http
-GET /api/v1/catalogo/produtos?categoria=LANCHE
-```
-
-3. Estoque sem token deve retornar 401:
-
-```http
-GET /api/v1/estoque/unidades/1/produtos/1
-```
-
-4. Estoque com token de CLIENTE deve retornar 403.
-
-5. Estoque com token de GERENTE deve retornar 200.
-
-## Validacoes recomendadas da Etapa 5
-
-1. Criacao de pedido com token de CLIENTE:
-
-```http
-POST /api/v1/pedidos
-```
-
-2. Criacao de pedido sem token deve retornar 401.
-
-3. Criacao de pedido com token de perfil interno deve retornar 403.
-
-4. Pedido com quantidade acima do estoque deve retornar 409.
-
-5. Consulta de pedidos do cliente:
-
-```http
-GET /api/v1/pedidos/me
-GET /api/v1/pedidos/me/{pedidoId}
-```
-
-## Validacoes recomendadas da Etapa 6
-
-1. Listar pedidos por unidade com token interno:
-
-```http
-GET /api/v1/pedidos/unidade/{unidadeId}
-```
-
-2. Atualizar status de `RECEBIDO` para `EM_PREPARO`:
-
-```http
-PATCH /api/v1/pedidos/{pedidoId}/status
-```
-
-3. Tentar transicao invalida (ex.: `RECEBIDO` para `PRONTO`) deve retornar 409.
-
-4. Cancelar pedido deve estornar o estoque automaticamente.
-
-5. Cliente tentando acessar endpoints operacionais deve retornar 403.
-
-## Servicos de commit agendado
-
-### Agendamento para 18h de hoje
+Windows PowerShell:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-hoje-18h.ps1
+.\mvnw.cmd test
 ```
 
-Script executado no horario:
+## Swagger e observabilidade
 
-- `./tools/commit-agendado-18h.ps1`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- Health check: `GET /api/v1/health`
+- Actuator health: `GET /actuator/health`
 
-### Agendamento para daqui a 3 horas (Etapa 6)
+## Endpoints principais
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\agendar-commit-daqui-3h.ps1
-```
+Autenticacao:
 
-Script executado no horario:
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `GET /api/v1/auth/me`
 
-- `./tools/commit-agendado-etapa6-3h.ps1`
+Catalogo e estoque:
 
-Observacao: os scripts de agendamento fazem commit e push automatico para `origin/master`. O script da Etapa 6 comita apenas os arquivos da etapa para evitar incluir arquivos nao relacionados.
+- `GET /api/v1/catalogo/produtos`
+- `GET /api/v1/catalogo/produtos/{produtoId}`
+- `GET /api/v1/estoque/unidades/{unidadeId}`
+- `GET /api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}`
 
-## DER preliminar
+Pedidos e pagamento:
 
-Consulte o arquivo `docs/der-preliminar.md` para uma visao textual dos relacionamentos mapeados nesta etapa.
+- `POST /api/v1/pedidos`
+- `GET /api/v1/pedidos/me`
+- `GET /api/v1/pedidos/me/{pedidoId}`
+- `GET /api/v1/pedidos`
+- `GET /api/v1/pedidos/unidade/{unidadeId}`
+- `PATCH /api/v1/pedidos/{pedidoId}/status`
+- `POST /api/v1/pedidos/{pedidoId}/pagamentos/mock`
+- `GET /api/v1/pagamentos/{pagamentoId}`
+- `POST /api/v1/pedidos/{pedidoId}/pagamento` (legado, mantido por compatibilidade)
 
-## Endpoint de saude
+Fidelidade:
 
-- `GET /api/v1/health`
+- `GET /api/v1/fidelidade/me`
+- `GET /api/v1/fidelidade/me/historico`
+- `PATCH /api/v1/fidelidade/me/consentimento`
 
-Resposta esperada:
+## Padrao de erro
 
 ```json
 {
-  "status": "UP",
-  "service": "raizes-backend",
-  "timestamp": "2026-05-02T12:00:00Z"
+  "error": "VALIDATION_ERROR",
+  "message": "Falha de validacao dos campos enviados.",
+  "details": [
+    {
+      "field": "campo",
+      "issue": "descricao"
+    }
+  ],
+  "timestamp": "2026-05-07T14:00:00Z",
+  "path": "/api/v1/pedidos",
+  "requestId": "uuid"
 }
 ```
 
-## Observacao importante da Etapa 6
+## Documentacao complementar
 
-A aplicacao permanece exigindo PostgreSQL ativo em `localhost:5432` (ou variaveis de ambiente customizadas). O catalogo segue publico, os endpoints de estoque exigem perfil interno autorizado, os endpoints `/api/v1/pedidos/me` exigem perfil `CLIENTE` e os endpoints operacionais de pedidos exigem perfil interno autorizado.
+- DER preliminar: `docs/der-preliminar.md`
+- Diagrama de casos de uso: `docs/diagrama-casos-uso.md`
+- Diagrama de classes (dominio): `docs/diagrama-classes.md`
+- Diagrama de sequencia (pedido/pagamento): `docs/diagrama-sequencia-pagamento.md`
+- Nota tecnica LGPD: `docs/lgpd-nota-tecnica.md`
+- Colecao Postman: `docs/raizes-api.postman_collection.json`

@@ -2,11 +2,18 @@ package br.com.raizesdonordeste.backend.application.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +23,7 @@ import br.com.raizesdonordeste.backend.api.dto.pedido.PedidoCreateRequest;
 import br.com.raizesdonordeste.backend.api.dto.pedido.PedidoItemCreateRequest;
 import br.com.raizesdonordeste.backend.api.dto.pedido.PedidoItemResponse;
 import br.com.raizesdonordeste.backend.api.dto.pedido.PedidoResponse;
+import br.com.raizesdonordeste.backend.domain.enums.CanalPedido;
 import br.com.raizesdonordeste.backend.domain.enums.PerfilUsuario;
 import br.com.raizesdonordeste.backend.domain.enums.StatusPedido;
 import br.com.raizesdonordeste.backend.domain.enums.TipoMovimentoEstoque;
@@ -34,6 +42,7 @@ import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.Ped
 import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.ProdutoRepository;
 import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.UnidadeRepository;
 import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.UsuarioRepository;
+import br.com.raizesdonordeste.backend.infrastructure.audit.AuditoriaService;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -47,6 +56,8 @@ public class PedidoService {
 	private final UsuarioRepository usuarioRepository;
 	private final EstoqueRepository estoqueRepository;
 	private final MovimentoEstoqueRepository movimentoEstoqueRepository;
+	private final PromocaoService promocaoService;
+	private final AuditoriaService auditoriaService;
 
 	@Transactional
 	public PedidoResponse criarPedido(PedidoCreateRequest request, String emailAutenticado) {
@@ -60,10 +71,9 @@ public class PedidoService {
 		pedido.setUnidade(unidade);
 		pedido.setCanalPedido(request.canalPedido());
 		pedido.setFormaPagamento(request.formaPagamento());
-		pedido.setStatus(StatusPedido.RECEBIDO);
+		pedido.setStatus(StatusPedido.AGUARDANDO_PAGAMENTO);
 
 		BigDecimal subtotal = BigDecimal.ZERO;
-		List<MovimentoEstoque> movimentos = new ArrayList<>();
 
 		for (PedidoItemCreateRequest itemRequest : request.itens()) {
 			Produto produto = produtoRepository.findByIdAndAtivoTrue(itemRequest.produtoId())
@@ -76,45 +86,64 @@ public class PedidoService {
 				throw new ResponseStatusException(HttpStatus.CONFLICT, "Estoque insuficiente para o produto " + produto.getNome());
 			}
 
-			estoque.setQuantidadeAtual(estoque.getQuantidadeAtual() - itemRequest.quantidade());
+			BigDecimal precoUnitarioAplicado = promocaoService.aplicarPromocaoSeExistir(
+				produto.getId(),
+				unidade.getId(),
+				produto.getPreco()
+			);
 
-			BigDecimal itemSubtotal = produto.getPreco().multiply(BigDecimal.valueOf(itemRequest.quantidade()));
+			BigDecimal itemSubtotal = precoUnitarioAplicado.multiply(BigDecimal.valueOf(itemRequest.quantidade()));
 			itemSubtotal = itemSubtotal.setScale(2, RoundingMode.HALF_UP);
 
 			PedidoItem item = new PedidoItem();
 			item.setPedido(pedido);
 			item.setProduto(produto);
 			item.setQuantidade(itemRequest.quantidade());
-			item.setPrecoUnitario(produto.getPreco());
+			item.setPrecoUnitario(precoUnitarioAplicado);
 			item.setSubtotal(itemSubtotal);
 			pedido.getItens().add(item);
 
 			subtotal = subtotal.add(itemSubtotal);
-
-			MovimentoEstoque movimento = new MovimentoEstoque();
-			movimento.setEstoque(estoque);
-			movimento.setTipo(TipoMovimentoEstoque.SAIDA_PEDIDO);
-			movimento.setQuantidade(itemRequest.quantidade());
-			movimento.setMotivo("Baixa por criacao do pedido");
-			movimentos.add(movimento);
 		}
 
 		pedido.setSubtotal(subtotal.setScale(2, RoundingMode.HALF_UP));
 		pedido.setTotal(subtotal.setScale(2, RoundingMode.HALF_UP));
 
 		Pedido salvo = pedidoRepository.save(pedido);
-		movimentos.forEach(movimento -> movimento.setPedido(salvo));
-		movimentoEstoqueRepository.saveAll(movimentos);
+
+		auditoriaService.registrar(
+			emailAutenticado,
+			"PEDIDO_CRIADO",
+			"Pedido",
+			salvo.getId(),
+			"canalPedido=" + salvo.getCanalPedido() + "; status=" + salvo.getStatus()
+		);
 
 		return toResponse(salvo);
 	}
 
 	@Transactional(readOnly = true)
-	public List<PedidoResponse> listarMeusPedidos(String emailAutenticado) {
+	public Page<PedidoResponse> listarMeusPedidos(
+		String emailAutenticado,
+		StatusPedido status,
+		CanalPedido canalPedido,
+		String dataInicio,
+		String dataFim,
+		Pageable pageable
+	) {
 		Cliente cliente = findClienteByEmail(emailAutenticado);
-		return pedidoRepository.findByClienteIdOrderByCreatedAtDesc(cliente.getId()).stream()
-			.map(this::toResponse)
-			.toList();
+
+		Page<Pedido> pedidos = pedidoRepository.findByFiltros(
+			cliente.getId(),
+			null,
+			status,
+			canalPedido,
+			parseDateTimeStart(dataInicio),
+			parseDateTimeEnd(dataFim),
+			pageable
+		);
+
+		return pedidos.map(this::toResponse);
 	}
 
 	@Transactional(readOnly = true)
@@ -128,17 +157,30 @@ public class PedidoService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<PedidoResponse> listarPedidosPorUnidade(Long unidadeId) {
-		unidadeRepository.findByIdAndAtivaTrue(unidadeId)
-			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unidade nao encontrada"));
+	public Page<PedidoResponse> listarPedidosComFiltros(
+		Long unidadeId,
+		Long clienteId,
+		StatusPedido status,
+		CanalPedido canalPedido,
+		String dataInicio,
+		String dataFim,
+		Pageable pageable
+	) {
+		Page<Pedido> pedidos = pedidoRepository.findByFiltros(
+			clienteId,
+			unidadeId,
+			status,
+			canalPedido,
+			parseDateTimeStart(dataInicio),
+			parseDateTimeEnd(dataFim),
+			pageable
+		);
 
-		return pedidoRepository.findByUnidadeIdOrderByCreatedAtDesc(unidadeId).stream()
-			.map(this::toResponse)
-			.toList();
+		return pedidos.map(this::toResponse);
 	}
 
 	@Transactional
-	public PedidoResponse atualizarStatus(Long pedidoId, StatusPedido novoStatus) {
+	public PedidoResponse atualizarStatus(Long pedidoId, StatusPedido novoStatus, String emailAutenticado) {
 		Pedido pedido = pedidoRepository.findById(pedidoId)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido nao encontrado"));
 
@@ -151,12 +193,21 @@ public class PedidoService {
 			throw new ResponseStatusException(HttpStatus.CONFLICT, "Transicao de status invalida");
 		}
 
-		if (novoStatus == StatusPedido.CANCELADO) {
+		if (novoStatus == StatusPedido.CANCELADO && statusComEstoqueBaixado(statusAtual)) {
 			estornarEstoquePorCancelamento(pedido);
 		}
 
 		pedido.setStatus(novoStatus);
 		Pedido salvo = pedidoRepository.save(pedido);
+
+		auditoriaService.registrar(
+			emailAutenticado,
+			"STATUS_PEDIDO_ALTERADO",
+			"Pedido",
+			salvo.getId(),
+			"novoStatus=" + novoStatus.name()
+		);
+
 		return toResponse(salvo);
 	}
 
@@ -174,6 +225,38 @@ public class PedidoService {
 
 	private String normalizeEmail(String email) {
 		return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private Instant parseDateTimeStart(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+
+		try {
+			return Instant.parse(value);
+		} catch (DateTimeParseException ex) {
+			try {
+				return LocalDate.parse(value).atStartOfDay().toInstant(ZoneOffset.UTC);
+			} catch (DateTimeParseException ignored) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dataInicio invalida");
+			}
+		}
+	}
+
+	private Instant parseDateTimeEnd(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+
+		try {
+			return Instant.parse(value);
+		} catch (DateTimeParseException ex) {
+			try {
+				return LocalDate.parse(value).atTime(LocalTime.MAX).toInstant(ZoneOffset.UTC);
+			} catch (DateTimeParseException ignored) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dataFim invalida");
+			}
+		}
 	}
 
 	private boolean isTransitionAllowed(StatusPedido statusAtual, StatusPedido novoStatus) {
@@ -194,6 +277,15 @@ public class PedidoService {
 			case PRONTO -> EnumSet.of(StatusPedido.ENTREGUE, StatusPedido.CANCELADO).contains(novoStatus);
 			case ENTREGUE, CANCELADO -> false;
 		};
+	}
+
+	private boolean statusComEstoqueBaixado(StatusPedido status) {
+		return EnumSet.of(
+			StatusPedido.PAGAMENTO_APROVADO,
+			StatusPedido.RECEBIDO,
+			StatusPedido.EM_PREPARO,
+			StatusPedido.PRONTO
+		).contains(status);
 	}
 
 	private void estornarEstoquePorCancelamento(Pedido pedido) {

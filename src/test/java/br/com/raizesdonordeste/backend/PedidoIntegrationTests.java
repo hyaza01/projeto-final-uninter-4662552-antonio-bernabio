@@ -54,7 +54,7 @@ class PedidoIntegrationTests {
 	private PasswordEncoder passwordEncoder;
 
 	@Test
-	void shouldCreateOrderAndDecreaseStock() throws Exception {
+	void shouldCreateOrderWithoutStockDecreaseBeforePayment() throws Exception {
 		String tokenCliente = registerClientAndGetToken();
 		EstoqueBase estoque = findAnyStockWithMinimum(5);
 		int quantidadePedido = 2;
@@ -66,7 +66,7 @@ class PedidoIntegrationTests {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(body)))
 			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.status").value("RECEBIDO"))
+			.andExpect(jsonPath("$.status").value("AGUARDANDO_PAGAMENTO"))
 			.andExpect(jsonPath("$.itens.length()").value(1))
 			.andReturn();
 
@@ -74,14 +74,14 @@ class PedidoIntegrationTests {
 		long pedidoId = pedidoJson.get("id").asLong();
 
 		int quantidadeAtual = findCurrentStock(estoque.unidadeId(), estoque.produtoId());
-		assertEquals(estoque.quantidadeAtual() - quantidadePedido, quantidadeAtual);
+		assertEquals(estoque.quantidadeAtual(), quantidadeAtual);
 
 		Integer movimentos = jdbcTemplate.queryForObject(
 			"SELECT COUNT(*) FROM movimentos_estoque WHERE pedido_id = ?",
 			Integer.class,
 			pedidoId
 		);
-		assertEquals(1, movimentos);
+		assertEquals(0, movimentos);
 	}
 
 	@Test
@@ -144,10 +144,11 @@ class PedidoIntegrationTests {
 		MvcResult lista = mockMvc.perform(get("/api/v1/pedidos/me")
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenClienteA))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.length()").value(greaterThanOrEqualTo(1)))
+			.andExpect(jsonPath("$.content.length()").value(greaterThanOrEqualTo(1)))
 			.andReturn();
 
-		JsonNode pedidos = objectMapper.readTree(lista.getResponse().getContentAsString(StandardCharsets.UTF_8));
+		JsonNode page = objectMapper.readTree(lista.getResponse().getContentAsString(StandardCharsets.UTF_8));
+		JsonNode pedidos = page.get("content");
 		boolean contemPedidoA = false;
 		for (JsonNode pedido : pedidos) {
 			if (pedido.get("id").asLong() == pedidoAId) {

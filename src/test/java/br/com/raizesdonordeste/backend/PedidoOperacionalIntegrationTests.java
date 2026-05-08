@@ -87,6 +87,7 @@ class PedidoOperacionalIntegrationTests {
 		EstoqueBase estoque = findAnyStockWithMinimum(3);
 
 		Long pedidoId = createOrderAndReturnId(tokenCliente, estoque.unidadeId(), estoque.produtoId(), 1);
+		processPayment(tokenCliente, pedidoId, true);
 
 		Map<String, String> body = Map.of("novoStatus", "EM_PREPARO");
 
@@ -106,6 +107,7 @@ class PedidoOperacionalIntegrationTests {
 		EstoqueBase estoque = findAnyStockWithMinimum(3);
 
 		Long pedidoId = createOrderAndReturnId(tokenCliente, estoque.unidadeId(), estoque.produtoId(), 1);
+		processPayment(tokenCliente, pedidoId, true);
 
 		Map<String, String> body = Map.of("novoStatus", "PRONTO");
 
@@ -145,7 +147,11 @@ class PedidoOperacionalIntegrationTests {
 		int estoqueAntes = findCurrentStock(estoque.unidadeId(), estoque.produtoId());
 		Long pedidoId = createOrderAndReturnId(tokenCliente, estoque.unidadeId(), estoque.produtoId(), quantidadePedido);
 		int estoqueDepoisCriacao = findCurrentStock(estoque.unidadeId(), estoque.produtoId());
-		assertEquals(estoqueAntes - quantidadePedido, estoqueDepoisCriacao);
+		assertEquals(estoqueAntes, estoqueDepoisCriacao);
+
+		processPayment(tokenCliente, pedidoId, true);
+		int estoqueDepoisPagamento = findCurrentStock(estoque.unidadeId(), estoque.produtoId());
+		assertEquals(estoqueAntes - quantidadePedido, estoqueDepoisPagamento);
 
 		Map<String, String> body = Map.of("novoStatus", "CANCELADO");
 
@@ -165,6 +171,25 @@ class PedidoOperacionalIntegrationTests {
 			pedidoId
 		);
 		assertEquals(1, movimentosEntrada);
+
+		Integer movimentosSaida = jdbcTemplate.queryForObject(
+			"SELECT COUNT(*) FROM movimentos_estoque WHERE pedido_id = ? AND tipo = 'SAIDA_PEDIDO'",
+			Integer.class,
+			pedidoId
+		);
+		assertEquals(1, movimentosSaida);
+	}
+
+	private void processPayment(String token, Long pedidoId, boolean forcarAprovacao) throws Exception {
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("resultadoMock", forcarAprovacao ? "APROVADO" : "RECUSADO");
+		body.put("metodo", "MOCK");
+
+		mockMvc.perform(post("/api/v1/pedidos/{pedidoId}/pagamentos/mock", pedidoId)
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(body)))
+			.andExpect(status().isOk());
 	}
 
 	private Long createOrderAndReturnId(String token, Long unidadeId, Long produtoId, int quantidade) throws Exception {
