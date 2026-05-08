@@ -10,7 +10,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "T01 - Login valido",
+          "name": "T01 - Login CLIENTE valido",
           "event": [
             {
               "listen": "test",
@@ -19,7 +19,10 @@
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
                   "const json = pm.response.json();",
-                  "if (json.accessToken) { pm.collectionVariables.set('token', json.accessToken); }"
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('tokenCliente', json.accessToken);",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "}"
                 ]
               }
             }
@@ -32,6 +35,38 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"cliente@raizes.local\",\n  \"senha\": \"Cliente@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T01B - Login GERENTE valido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) { pm.collectionVariables.set('tokenOperacional', json.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gerente@raizes.local\",\n  \"senha\": \"Gerente@123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/auth/login",
@@ -87,7 +122,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -107,7 +142,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/estoque/{{estoqueId}}/movimentacoes?page=0&limit=10",
@@ -403,7 +438,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -423,7 +458,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/promocoes?page=0&limit=10",
@@ -447,7 +482,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auditorias?page=0&limit=20",
@@ -483,7 +518,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/auditorias",
@@ -498,7 +533,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -519,6 +554,8 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
     { "key": "token", "value": "" },
+    { "key": "tokenCliente", "value": "" },
+    { "key": "tokenOperacional", "value": "" },
     { "key": "pedidoId", "value": "1" },
     { "key": "pagamentoId", "value": "1" },
     { "key": "unidadeId", "value": "1" },

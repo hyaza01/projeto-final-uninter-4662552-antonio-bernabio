@@ -104,6 +104,7 @@ Arquivos principais:
 - src/main/resources/db/migration/V1__create_core_schema.sql
 - src/main/resources/db/migration/V2__seed_initial_data.sql
 - src/main/resources/db/migration/V3__add_final_fields_for_promocao_auditoria_fidelidade.sql
+- src/main/resources/db/migration/V4__fix_seed_test_users_passwords.sql
 
 ## Iniciando a API
 
@@ -126,16 +127,16 @@ Windows PowerShell:
 
 ## Usuarios de teste
 
-Usuarios seed (quando SEED_TEST_USERS_ENABLED=true):
+| Perfil | Email | Senha |
+|---|---|---|
+| ADMIN | admin@raizes.local | Admin@123 |
+| GERENTE | gerente@raizes.local | Gerente@123 |
+| ATENDENTE | atendente@raizes.local | Atendente@123 |
+| COZINHA | cozinha@raizes.local | Cozinha@123 |
+| CLIENTE | cliente@raizes.local | Cliente@123 |
 
-- admin@raizes.local (ADMIN)
-- gerente@raizes.local (GERENTE)
-- cliente@raizes.local (CLIENTE)
-
-Senha de teste:
-
-- Os hashes seed sao placeholders e nao devem ser usados para login direto.
-- Para execucao funcional, registre usuarios via endpoint /api/v1/auth/register.
+Observacao:
+O endpoint publico /api/v1/auth/register cria usuarios com perfil CLIENTE por seguranca. Usuarios operacionais para avaliacao sao disponibilizados via seed/migration.
 
 ## Endpoints principais
 

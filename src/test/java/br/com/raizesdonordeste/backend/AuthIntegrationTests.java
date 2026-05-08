@@ -99,6 +99,33 @@ class AuthIntegrationTests {
 	}
 
 	@Test
+	void shouldLoginWithSeededAdminAndClienteUsers() throws Exception {
+		Map<String, String> adminBody = Map.of(
+			"email", "admin@raizes.local",
+			"senha", "Admin@123"
+		);
+
+		mockMvc.perform(post("/api/v1/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(adminBody)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.usuario.email").value("admin@raizes.local"))
+			.andExpect(jsonPath("$.usuario.perfil").value("ADMIN"));
+
+		Map<String, String> clienteBody = Map.of(
+			"email", "cliente@raizes.local",
+			"senha", "Cliente@123"
+		);
+
+		mockMvc.perform(post("/api/v1/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(clienteBody)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.usuario.email").value("cliente@raizes.local"))
+			.andExpect(jsonPath("$.usuario.perfil").value("CLIENTE"));
+	}
+
+	@Test
 	void shouldReturnUnauthorizedWithoutTokenOnProtectedRoute() throws Exception {
 		mockMvc.perform(get("/api/v1/private/ping"))
 			.andExpect(status().isUnauthorized());
