@@ -33,6 +33,8 @@ entity Unidade {
   bairro : varchar
   endereco : varchar
   ativa : boolean
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity Produto {
@@ -43,6 +45,8 @@ entity Produto {
   preco : numeric
   categoria : enum
   ativo : boolean
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity Estoque {
@@ -52,6 +56,8 @@ entity Estoque {
   produto_id : bigint
   quantidade_atual : int
   estoque_minimo : int
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity MovimentoEstoque {
@@ -75,6 +81,8 @@ entity Pedido {
   forma_pagamento : enum
   subtotal : numeric
   total : numeric
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity PedidoItem {
@@ -97,6 +105,8 @@ entity Pagamento {
   payload_envio : text
   payload_retorno : text
   codigo_transacao_mock : varchar
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity FidelidadeHistorico {
@@ -121,6 +131,8 @@ entity Promocao {
   data_fim : date
   produto_id : bigint?
   unidade_id : bigint?
+  created_at : timestamptz
+  updated_at : timestamptz
 }
 
 entity Auditoria {

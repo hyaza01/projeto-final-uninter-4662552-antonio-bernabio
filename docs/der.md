@@ -41,3 +41,10 @@
 - Fidelidade so pontua quando houver consentimento ativo.
 - Promocao ativa e no periodo e aplicada ao preco unitario congelado no PedidoItem.
 - Auditoria registra acoes sensiveis (login, pedido, pagamento, fidelidade, estoque, promocao).
+
+## Coerencia com as migrations
+
+- V1 cria a estrutura principal das tabelas operacionais e de seguranca.
+- V2 semeia dados iniciais de usuarios, cliente, unidade, produtos e estoques.
+- V3 adiciona `descricao` em Promocao, `ip_origem` em Auditoria e `consentimento_fidelidade_atualizado_em` em Cliente.
+- V4 ajusta apenas os usuarios seedados para credenciais de avaliacao com hash BCrypt valido, sem alterar a estrutura do schema.

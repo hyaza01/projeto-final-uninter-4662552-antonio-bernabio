@@ -180,7 +180,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -200,7 +200,7 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -220,7 +220,7 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -240,7 +240,7 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -260,7 +260,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/pedidos?canalPedido=TOTEM&page=0&limit=10",
@@ -280,7 +280,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -300,7 +300,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -320,7 +320,7 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenOperacional}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -358,7 +358,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -378,7 +378,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "body": {
@@ -398,7 +398,7 @@
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
             ],
             "url": {
               "raw": "{{baseUrl}}/api/v1/pagamentos/{{pagamentoId}}",
@@ -414,16 +414,16 @@
       "name": "Fidelidade",
       "item": [
         {
-          "name": "T09 - Consultar saldo de fidelidade",
+          "name": "T09 - Consultar fidelidade propria",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}/fidelidade/saldo",
+              "raw": "{{baseUrl}}/api/v1/fidelidade/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "clientes", "{{clienteId}}", "fidelidade", "saldo"]
+              "path": ["api", "v1", "fidelidade", "me"]
             }
           },
           "response": []

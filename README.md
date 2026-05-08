@@ -4,12 +4,12 @@ API REST para operacao de pedidos, pagamento mock, estoque, fidelidade, promocoe
 
 ## Acesso rapido
 
-- Repositorio: https://github.com/hyaza01/projeto-final-uninter-4662552-antonio-bernabio
-- Swagger local: http://localhost:8080/swagger-ui/index.html
-- Colecao Postman: docs/postman/raizes-do-nordeste.postman_collection.json
-- DER: docs/der.md e docs/der.puml
-- LGPD: docs/lgpd.md
-- Diagramas: docs/casos-de-uso.puml, docs/classes.puml, docs/sequencia-pedido-pagamento.puml
+- Repositorio: <https://github.com/hyaza01/projeto-final-uninter-4662552-antonio-bernabio>
+- Swagger local: <http://localhost:8080/swagger-ui/index.html>
+- Colecao Postman: [docs/postman/raizes-do-nordeste.postman_collection.json](docs/postman/raizes-do-nordeste.postman_collection.json)
+- DER: [docs/der.md](docs/der.md) e [docs/der.puml](docs/der.puml)
+- LGPD: [docs/lgpd.md](docs/lgpd.md)
+- Diagramas: [docs/casos-de-uso.png](docs/casos-de-uso.png), [docs/classes.png](docs/classes.png), [docs/sequencia-pedido-pagamento.png](docs/sequencia-pedido-pagamento.png)
 
 ## Descricao
 
@@ -101,10 +101,10 @@ As migrations Flyway rodam automaticamente ao iniciar a API.
 
 Arquivos principais:
 
-- src/main/resources/db/migration/V1__create_core_schema.sql
-- src/main/resources/db/migration/V2__seed_initial_data.sql
-- src/main/resources/db/migration/V3__add_final_fields_for_promocao_auditoria_fidelidade.sql
-- src/main/resources/db/migration/V4__fix_seed_test_users_passwords.sql
+- [src/main/resources/db/migration/V1__create_core_schema.sql](src/main/resources/db/migration/V1__create_core_schema.sql)
+- [src/main/resources/db/migration/V2__seed_initial_data.sql](src/main/resources/db/migration/V2__seed_initial_data.sql)
+- [src/main/resources/db/migration/V3__add_final_fields_for_promocao_auditoria_fidelidade.sql](src/main/resources/db/migration/V3__add_final_fields_for_promocao_auditoria_fidelidade.sql)
+- [src/main/resources/db/migration/V4__fix_seed_test_users_passwords.sql](src/main/resources/db/migration/V4__fix_seed_test_users_passwords.sql)
 
 ## Iniciando a API
 
@@ -136,6 +136,7 @@ Windows PowerShell:
 | CLIENTE | cliente@raizes.local | Cliente@123 |
 
 Observacao:
+
 O endpoint publico /api/v1/auth/register cria usuarios com perfil CLIENTE por seguranca. Usuarios operacionais para avaliacao sao disponibilizados via seed/migration.
 
 ## Endpoints principais
@@ -293,19 +294,20 @@ Mapeamentos principais:
 
 Colecao final:
 
-- docs/postman/raizes-do-nordeste.postman_collection.json
+- [docs/postman/raizes-do-nordeste.postman_collection.json](docs/postman/raizes-do-nordeste.postman_collection.json)
 
 Ordem recomendada:
 
-1. T01 login valido
-2. T02 consultar cardapio por unidade
-3. T03 criar pedido com canalPedido APP
-4. T04 pagamento mock aprovado
-5. T05, T06, T07 transicoes operacionais
-6. T08 filtro por canalPedido
-7. T09 saldo de fidelidade
-8. T10 auditoria por gerente/admin
-9. T11 a T18 cenarios negativos
+1. T01 login CLIENTE valido
+2. T01B login GERENTE valido
+3. T02 consultar cardapio por unidade
+4. T03 criar pedido com canalPedido APP
+5. T04 pagamento mock aprovado
+6. T05, T06, T07 transicoes operacionais
+7. T08 filtro operacional por canalPedido
+8. T09 fidelidade propria
+9. T10 auditoria por gerente/admin
+10. T11 a T18 cenarios negativos
 
 ## Comandos para rodar testes
 
@@ -323,16 +325,11 @@ Windows PowerShell:
 
 ## Diagramas e evidencias
 
-- DER: docs/der.md e docs/der.puml
-- Casos de uso: docs/casos-de-uso.puml
-- Classes: docs/classes.puml
-- Sequencia pedido/pagamento: docs/sequencia-pedido-pagamento.puml
-- LGPD: docs/lgpd.md
-
-Observacao:
-
-- Os arquivos PNG dos diagramas nao foram gerados automaticamente neste commit.
-- Os arquivos PlantUML estao prontos para renderizacao local.
+- DER: [docs/der.png](docs/der.png) e [docs/der.puml](docs/der.puml)
+- Casos de uso: [docs/casos-de-uso.png](docs/casos-de-uso.png) e [docs/casos-de-uso.puml](docs/casos-de-uso.puml)
+- Classes: [docs/classes.png](docs/classes.png) e [docs/classes.puml](docs/classes.puml)
+- Sequencia pedido/pagamento: [docs/sequencia-pedido-pagamento.png](docs/sequencia-pedido-pagamento.png) e [docs/sequencia-pedido-pagamento.puml](docs/sequencia-pedido-pagamento.puml)
+- LGPD: [docs/lgpd.md](docs/lgpd.md)
 
 ## Decisoes documentadas
 
