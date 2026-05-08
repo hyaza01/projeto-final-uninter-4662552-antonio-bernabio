@@ -1,4 +1,4 @@
-# DER Final - Raizes do Nordeste
+# DER Final - Raízes do Nordeste
 
 ## Entidades principais
 
@@ -33,7 +33,7 @@
 - Unidade 1:N Promocao (opcional)
 - Usuario 1:N Auditoria (opcional)
 
-## Observacoes de dominio
+## Observações de domínio
 
 - Pedido nasce em AGUARDANDO_PAGAMENTO.
 - Estoque so e baixado no pagamento APROVADO.
@@ -42,7 +42,7 @@
 - Promocao ativa e no periodo e aplicada ao preco unitario congelado no PedidoItem.
 - Auditoria registra acoes sensiveis (login, pedido, pagamento, fidelidade, estoque, promocao).
 
-## Coerencia com as migrations
+## Coerência com as migrations
 
 - V1 cria a estrutura principal das tabelas operacionais e de seguranca.
 - V2 semeia dados iniciais de usuarios, cliente, unidade, produtos e estoques.

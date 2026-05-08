@@ -1,4 +1,4 @@
-# LGPD - Nota Tecnica Final
+# LGPD - Nota Técnica Final
 
 ## Dados pessoais coletados
 
@@ -26,13 +26,13 @@
 - Registro de consentimento inclui timestamp de atualizacao.
 - Sem consentimento ativo, nao ha geracao de pontos.
 
-## Minimizacao de dados
+## Minimização de dados
 
 - Dados de pagamento real nao sao coletados.
 - Fluxo de pagamento e mock, sem cartao, CVV ou tokenizacao bancaria.
 - Responses da API nao expõem senha nem senhaHash.
 
-## Protecao de credenciais
+## Proteção de credenciais
 
 - Senhas sao armazenadas com hash BCrypt.
 - JWT usado para autenticacao de sessao stateless.
@@ -50,13 +50,13 @@
   criacao/alteracao de promocao.
 - Auditoria inclui usuario, acao, entidade, entidadeId, detalhes, ip de origem (quando disponivel), timestamp.
 
-## Retencao e anonimização (proposta tecnica)
+## Retenção e anonimização (proposta técnica)
 
 - Definir politica de retencao por tipo de dado (operacional x auditoria).
 - Aplicar anonimização/pseudonimizacao para dados historicos fora de janela operacional.
 - Implementar processo de descarte seguro com trilha de evidencias.
 
-## Observacao sobre pagamento mock
+## Observação sobre pagamento mock
 
 - O projeto utiliza PaymentMockService para simulacao.
 - Nao ha integracao com gateway real e nao ha coleta de dados reais de cartao.
