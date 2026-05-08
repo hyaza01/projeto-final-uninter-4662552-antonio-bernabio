@@ -1,0 +1,54 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Cliente
+actor Atendente
+actor Cozinha
+actor Gerente
+actor Administrador
+actor "Gateway de Pagamento Mock" as GatewayMock
+
+rectangle "Sistema Raizes do Nordeste" {
+  usecase "Autenticar" as UC_Login
+  usecase "Consultar Catalogo" as UC_Catalogo
+  usecase "Consultar Cardapio\npor Unidade" as UC_Cardapio
+  usecase "Criar Pedido" as UC_CriarPedido
+  usecase "Pagar Pedido (Mock)" as UC_Pagar
+  usecase "Consultar Pedidos\ncom filtros" as UC_ListarPedidos
+  usecase "Atualizar Status\ndo Pedido" as UC_StatusPedido
+  usecase "Consultar/Atualizar\nFidelidade" as UC_Fidelidade
+  usecase "Movimentar Estoque\n(manual)" as UC_MovEstoque
+  usecase "Gerenciar Promocoes" as UC_Promocoes
+  usecase "Consultar Auditoria" as UC_Auditoria
+}
+
+Cliente --> UC_Login
+Cliente --> UC_Catalogo
+Cliente --> UC_Cardapio
+Cliente --> UC_CriarPedido
+Cliente --> UC_Pagar
+Cliente --> UC_ListarPedidos
+Cliente --> UC_Fidelidade
+
+Atendente --> UC_ListarPedidos
+Atendente --> UC_StatusPedido
+
+Cozinha --> UC_ListarPedidos
+Cozinha --> UC_StatusPedido
+
+Gerente --> UC_ListarPedidos
+Gerente --> UC_StatusPedido
+Gerente --> UC_MovEstoque
+Gerente --> UC_Promocoes
+Gerente --> UC_Auditoria
+Gerente --> UC_Fidelidade
+
+Administrador --> UC_ListarPedidos
+Administrador --> UC_MovEstoque
+Administrador --> UC_Promocoes
+Administrador --> UC_Auditoria
+Administrador --> UC_Fidelidade
+
+UC_Pagar --> GatewayMock
+@enduml

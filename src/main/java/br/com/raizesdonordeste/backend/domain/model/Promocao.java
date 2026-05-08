@@ -30,6 +30,9 @@ public class Promocao extends AuditableEntity {
 	@Column(name = "nome", nullable = false, length = 120)
 	private String nome;
 
+	@Column(name = "descricao", nullable = false, length = 500)
+	private String descricao;
+
 	@Column(name = "ativa", nullable = false)
 	private boolean ativa;
 

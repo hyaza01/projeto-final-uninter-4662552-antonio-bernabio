@@ -160,6 +160,33 @@ class PedidoIntegrationTests {
 		assertTrue(contemPedidoA);
 	}
 
+	@Test
+	void shouldRestrictClientOnGeneralOrderListToOwnOrders() throws Exception {
+		String tokenClienteA = registerClientAndGetToken();
+		String tokenClienteB = registerClientAndGetToken();
+		EstoqueBase estoque = findAnyStockWithMinimum(5);
+
+		Long pedidoAId = createOrderAndReturnId(tokenClienteA, estoque.unidadeId(), estoque.produtoId(), 1);
+		Long pedidoBId = createOrderAndReturnId(tokenClienteB, estoque.unidadeId(), estoque.produtoId(), 1);
+
+		Long clienteAId = jdbcTemplate.queryForObject("SELECT cliente_id FROM pedidos WHERE id = ?", Long.class, pedidoAId);
+		Long clienteBId = jdbcTemplate.queryForObject("SELECT cliente_id FROM pedidos WHERE id = ?", Long.class, pedidoBId);
+
+		MvcResult lista = mockMvc.perform(get("/api/v1/pedidos")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenClienteA)
+				.param("clienteId", String.valueOf(clienteBId))
+				.param("page", "0")
+				.param("limit", "20"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.content.length()").value(greaterThanOrEqualTo(1)))
+			.andReturn();
+
+		JsonNode content = objectMapper.readTree(lista.getResponse().getContentAsString(StandardCharsets.UTF_8)).get("content");
+		for (JsonNode pedido : content) {
+			assertEquals(clienteAId, pedido.get("clienteId").asLong());
+		}
+	}
+
 	private Long createOrderAndReturnId(String token, Long unidadeId, Long produtoId, int quantidade) throws Exception {
 		Map<String, Object> body = createOrderBody(unidadeId, produtoId, quantidade);
 

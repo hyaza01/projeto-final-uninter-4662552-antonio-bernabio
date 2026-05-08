@@ -1,0 +1,111 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Usuario {
+  +id: Long
+  +nome: String
+  +email: String
+  +perfil: PerfilUsuario
+  +ativo: boolean
+}
+
+class Cliente {
+  +id: Long
+  +consentimentoFidelidade: boolean
+  +consentimentoFidelidadeAtualizadoEm: Instant
+  +pontosSaldo: Integer
+}
+
+class Unidade {
+  +id: Long
+  +nome: String
+  +ativa: boolean
+}
+
+class Produto {
+  +id: Long
+  +nome: String
+  +preco: BigDecimal
+  +categoria: CategoriaProduto
+  +ativo: boolean
+}
+
+class Estoque {
+  +id: Long
+  +quantidadeAtual: Integer
+  +estoqueMinimo: Integer
+}
+
+class MovimentoEstoque {
+  +id: Long
+  +tipo: TipoMovimentoEstoque
+  +quantidade: Integer
+  +motivo: String
+  +createdAt: Instant
+}
+
+class Pedido {
+  +id: Long
+  +canalPedido: CanalPedido
+  +status: StatusPedido
+  +subtotal: BigDecimal
+  +total: BigDecimal
+}
+
+class PedidoItem {
+  +id: Long
+  +quantidade: Integer
+  +precoUnitario: BigDecimal
+  +subtotal: BigDecimal
+}
+
+class Pagamento {
+  +id: Long
+  +status: StatusPagamento
+  +metodo: FormaPagamento
+  +valor: BigDecimal
+  +codigoTransacaoMock: String
+}
+
+class FidelidadeHistorico {
+  +id: Long
+  +tipo: TipoMovimentacaoFidelidade
+  +pontos: Integer
+  +descricao: String
+}
+
+class Promocao {
+  +id: Long
+  +nome: String
+  +descricao: String
+  +ativa: boolean
+  +percentualDesconto: BigDecimal
+  +dataInicio: LocalDate
+  +dataFim: LocalDate
+}
+
+class Auditoria {
+  +id: Long
+  +acao: String
+  +entidade: String
+  +entidadeId: Long
+  +detalhes: String
+  +ipOrigem: String
+}
+
+Usuario "1" -- "1" Cliente
+Cliente "1" -- "*" Pedido
+Unidade "1" -- "*" Pedido
+Pedido "1" -- "*" PedidoItem
+Produto "1" -- "*" PedidoItem
+Pedido "1" -- "1" Pagamento
+Unidade "1" -- "*" Estoque
+Produto "1" -- "*" Estoque
+Estoque "1" -- "*" MovimentoEstoque
+Pedido "0..1" -- "*" MovimentoEstoque
+Cliente "1" -- "*" FidelidadeHistorico
+Pedido "0..1" -- "*" FidelidadeHistorico
+Produto "0..1" -- "*" Promocao
+Unidade "0..1" -- "*" Promocao
+Usuario "0..1" -- "*" Auditoria
+@enduml

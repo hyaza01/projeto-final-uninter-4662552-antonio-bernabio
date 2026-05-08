@@ -1,0 +1,46 @@
+@startuml
+autonumber
+actor Cliente
+participant AuthController as Auth
+participant PedidoController
+participant PedidoService
+participant EstoqueService as Estoque
+participant PagamentoService
+participant PaymentMockService as GatewayMock
+participant AuditoriaService as Auditoria
+database Banco
+
+Cliente -> Auth : POST /api/v1/auth/login
+Auth -> Banco : validar credenciais + gerar JWT
+Auth --> Cliente : 200 accessToken
+
+Cliente -> PedidoController : POST /api/v1/pedidos
+PedidoController -> PedidoService : criarPedido(request, usuario)
+PedidoService -> Estoque : validar saldo por item
+Estoque -> Banco : consultar estoques
+PedidoService -> Banco : salvar Pedido e PedidoItem
+PedidoService -> Auditoria : CRIACAO_PEDIDO
+Auditoria -> Banco : salvar auditoria
+PedidoService --> PedidoController : PedidoResponse(AGUARDANDO_PAGAMENTO)
+PedidoController --> Cliente : 201
+
+Cliente -> PagamentoService : POST /api/v1/pedidos/{id}/pagamentos/mock
+PagamentoService -> GatewayMock : processar(pedido, resultadoMock)
+GatewayMock --> PagamentoService : status + payload retorno
+
+alt pagamento aprovado
+  PagamentoService -> Estoque : baixar estoque dos itens
+  Estoque -> Banco : atualizar saldo + movimento SAIDA_PEDIDO
+  PagamentoService -> Banco : salvar pagamento APROVADO
+  PagamentoService -> Banco : atualizar pedido PAGAMENTO_APROVADO
+  PagamentoService -> Auditoria : PAGAMENTO_APROVADO
+  Auditoria -> Banco : salvar auditoria
+else pagamento recusado
+  PagamentoService -> Banco : salvar pagamento RECUSADO
+  PagamentoService -> Banco : atualizar pedido PAGAMENTO_RECUSADO
+  PagamentoService -> Auditoria : PAGAMENTO_RECUSADO
+  Auditoria -> Banco : salvar auditoria
+end
+
+PagamentoService --> Cliente : 200 PagamentoResponse
+@enduml

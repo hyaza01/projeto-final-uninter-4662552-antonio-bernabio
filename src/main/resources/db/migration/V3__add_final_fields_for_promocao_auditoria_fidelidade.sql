@@ -1,0 +1,8 @@
+ALTER TABLE promocoes
+    ADD COLUMN IF NOT EXISTS descricao VARCHAR(500) NOT NULL DEFAULT '';
+
+ALTER TABLE auditorias
+    ADD COLUMN IF NOT EXISTS ip_origem VARCHAR(80);
+
+ALTER TABLE clientes
+    ADD COLUMN IF NOT EXISTS consentimento_fidelidade_atualizado_em TIMESTAMP WITH TIME ZONE;

@@ -15,7 +15,7 @@ public final class ApiErrorFactory {
 	public static ApiErrorResponse build(
 		String error,
 		String message,
-		List<ApiErrorDetail> details,
+		List<FieldErrorResponse> details,
 		HttpServletRequest request
 	) {
 		String requestId = Optional.ofNullable(request.getHeader("X-Request-Id"))

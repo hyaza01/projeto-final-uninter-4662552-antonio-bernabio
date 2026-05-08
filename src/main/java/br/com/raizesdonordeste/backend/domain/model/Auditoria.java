@@ -45,6 +45,9 @@ public class Auditoria {
 	@Column(name = "detalhes", nullable = false, columnDefinition = "TEXT")
 	private String detalhes;
 
+	@Column(name = "ip_origem", length = 80)
+	private String ipOrigem;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 

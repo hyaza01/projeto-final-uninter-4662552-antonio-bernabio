@@ -6,7 +6,7 @@ import java.util.List;
 public record ApiErrorResponse(
 	String error,
 	String message,
-	List<ApiErrorDetail> details,
+	List<FieldErrorResponse> details,
 	Instant timestamp,
 	String path,
 	String requestId

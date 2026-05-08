@@ -1,5 +1,6 @@
 package br.com.raizesdonordeste.backend.domain.model;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,9 @@ public class Cliente extends AuditableEntity {
 
 	@Column(name = "pontos_saldo", nullable = false)
 	private Integer pontosSaldo = 0;
+
+	@Column(name = "consentimento_fidelidade_atualizado_em")
+	private Instant consentimentoFidelidadeAtualizadoEm;
 
 	@OneToMany(mappedBy = "cliente", fetch = FetchType.LAZY)
 	private List<Pedido> pedidos = new ArrayList<>();

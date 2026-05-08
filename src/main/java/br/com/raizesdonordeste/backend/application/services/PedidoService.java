@@ -113,7 +113,7 @@ public class PedidoService {
 
 		auditoriaService.registrar(
 			emailAutenticado,
-			"PEDIDO_CRIADO",
+			"CRIACAO_PEDIDO",
 			"Pedido",
 			salvo.getId(),
 			"canalPedido=" + salvo.getCanalPedido() + "; status=" + salvo.getStatus()
@@ -199,16 +199,22 @@ public class PedidoService {
 
 		pedido.setStatus(novoStatus);
 		Pedido salvo = pedidoRepository.save(pedido);
+		String acaoAuditoria = novoStatus == StatusPedido.CANCELADO ? "CANCELAMENTO_PEDIDO" : "ALTERACAO_STATUS_PEDIDO";
 
 		auditoriaService.registrar(
 			emailAutenticado,
-			"STATUS_PEDIDO_ALTERADO",
+			acaoAuditoria,
 			"Pedido",
 			salvo.getId(),
-			"novoStatus=" + novoStatus.name()
+			"statusAnterior=" + statusAtual.name() + "; novoStatus=" + novoStatus.name()
 		);
 
 		return toResponse(salvo);
+	}
+
+	@Transactional(readOnly = true)
+	public Long buscarClienteIdPorEmail(String emailAutenticado) {
+		return findClienteByEmail(emailAutenticado).getId();
 	}
 
 	private Cliente findClienteByEmail(String email) {

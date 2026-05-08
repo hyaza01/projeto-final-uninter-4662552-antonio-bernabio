@@ -1,0 +1,529 @@
+{
+  "info": {
+    "name": "Raizes do Nordeste - Colecao Final",
+    "_postman_id": "1fd2db8f-4e2f-4b31-8ff6-4aa5dbcc71ab",
+    "description": "Colecao final para validacao dos fluxos criticos, seguranca e erros da API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "T01 - Login valido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) { pm.collectionVariables.set('token', json.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@raizes.local\",\n  \"senha\": \"Cliente@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T11 - Login invalido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"cliente@raizes.local\",\n  \"senha\": \"senha-invalida\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Catalogo",
+      "item": [
+        {
+          "name": "T02 - Consultar cardapio por unidade",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/unidades/{{unidadeId}}/cardapio",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "unidades", "{{unidadeId}}", "cardapio"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Estoque",
+      "item": [
+        {
+          "name": "Movimentacao manual ENTRADA",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": {{unidadeId}},\n  \"produtoId\": {{produtoId}},\n  \"tipo\": \"ENTRADA\",\n  \"quantidade\": 10,\n  \"motivo\": \"Reposicao manual\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estoque/movimentacoes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estoque", "movimentacoes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar movimentacoes por estoque",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estoque/{{estoqueId}}/movimentacoes?page=0&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estoque", "{{estoqueId}}", "movimentacoes"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "T03 - Criar pedido com canalPedido APP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('pedidoId', json.id); }",
+                  "if (json.clienteId) { pm.collectionVariables.set('clienteId', json.clienteId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": {{unidadeId}},\n  \"canalPedido\": \"APP\",\n  \"formaPagamento\": \"PIX\",\n  \"itens\": [\n    {\n      \"produtoId\": {{produtoId}},\n      \"quantidade\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T05 - Atualizar pedido para EM_PREPARO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": \"EM_PREPARO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T06 - Atualizar pedido para PRONTO",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": \"PRONTO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T07 - Atualizar pedido para ENTREGUE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": \"ENTREGUE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T08 - Consultar pedidos por canalPedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos?canalPedido=TOTEM&page=0&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos"],
+              "query": [
+                { "key": "canalPedido", "value": "TOTEM" },
+                { "key": "page", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T14 - Criar pedido sem canalPedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": {{unidadeId}},\n  \"formaPagamento\": \"PIX\",\n  \"itens\": [\n    {\n      \"produtoId\": {{produtoId}},\n      \"quantidade\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T15 - Criar pedido com estoque insuficiente",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": {{unidadeId}},\n  \"canalPedido\": \"APP\",\n  \"formaPagamento\": \"PIX\",\n  \"itens\": [\n    {\n      \"produtoId\": {{produtoId}},\n      \"quantidade\": 99999\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T17 - Transicao invalida de status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": \"PRONTO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "status"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pagamentos",
+      "item": [
+        {
+          "name": "T04 - Pagamento mock aprovado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json.pagamentoId) { pm.collectionVariables.set('pagamentoId', json.pagamentoId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resultadoMock\": \"APROVADO\",\n  \"metodo\": \"MOCK\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamentos/mock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamentos", "mock"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T16 - Pagamento mock recusado",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resultadoMock\": \"RECUSADO\",\n  \"metodo\": \"MOCK\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pedidos/{{pedidoId}}/pagamentos/mock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pedidos", "{{pedidoId}}", "pagamentos", "mock"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar pagamento por id",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pagamentos/{{pagamentoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pagamentos", "{{pagamentoId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Fidelidade",
+      "item": [
+        {
+          "name": "T09 - Consultar saldo de fidelidade",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/clientes/{{clienteId}}/fidelidade/saldo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "clientes", "{{clienteId}}", "fidelidade", "saldo"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Promocoes",
+      "item": [
+        {
+          "name": "Criar promocao",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Promocao Sao Joao\",\n  \"descricao\": \"Desconto especial em pratos tipicos\",\n  \"percentualDesconto\": 10.0,\n  \"dataInicio\": \"2026-06-01\",\n  \"dataFim\": \"2026-06-30\",\n  \"ativa\": true,\n  \"produtoId\": null,\n  \"unidadeId\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/promocoes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "promocoes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar promocoes",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/promocoes?page=0&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "promocoes"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auditoria",
+      "item": [
+        {
+          "name": "T10 - Consultar auditoria como GERENTE ou ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auditorias?page=0&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auditorias"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Erros",
+      "item": [
+        {
+          "name": "T12 - Acessar rota sem token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/private/ping",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "private", "ping"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T13 - Acessar rota de gerente/admin com perfil CLIENTE",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auditorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auditorias"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "T18 - Saida de estoque maior que saldo",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": {{unidadeId}},\n  \"produtoId\": {{produtoId}},\n  \"tipo\": \"SAIDA\",\n  \"quantidade\": 99999,\n  \"motivo\": \"Teste de conflito\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/estoque/movimentacoes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "estoque", "movimentacoes"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "pedidoId", "value": "1" },
+    { "key": "pagamentoId", "value": "1" },
+    { "key": "unidadeId", "value": "1" },
+    { "key": "produtoId", "value": "1" },
+    { "key": "clienteId", "value": "1" },
+    { "key": "estoqueId", "value": "1" }
+  ]
+}

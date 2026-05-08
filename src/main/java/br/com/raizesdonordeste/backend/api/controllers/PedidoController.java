@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -76,16 +77,32 @@ public class PedidoController {
 	@GetMapping
 	@Operation(summary = "Listar pedidos com filtros operacionais", security = @SecurityRequirement(name = "bearerAuth"))
 	public ResponseEntity<Page<PedidoResponse>> listarPedidos(
+		Authentication authentication,
 		@RequestParam(required = false) Long unidadeId,
 		@RequestParam(required = false) Long clienteId,
 		@RequestParam(required = false) StatusPedido status,
 		@RequestParam(required = false) CanalPedido canalPedido,
 		@RequestParam(required = false) String dataInicio,
 		@RequestParam(required = false) String dataFim,
-		Pageable pageable
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "20") int limit,
+		@RequestParam(name = "size", required = false) Integer size,
+		@RequestParam(defaultValue = "createdAt,desc") String sort
 	) {
+		int tamanhoSolicitado = size == null ? limit : size;
+		int tamanhoPagina = Math.max(1, Math.min(tamanhoSolicitado, 100));
+		Pageable pageable = PageRequest.of(Math.max(page, 0), tamanhoPagina, resolveSort(sort));
+
+		Long filtroClienteId = clienteId;
+		boolean perfilCliente = authentication.getAuthorities().stream()
+			.anyMatch(authority -> "ROLE_CLIENTE".equals(authority.getAuthority()));
+
+		if (perfilCliente) {
+			filtroClienteId = pedidoService.buscarClienteIdPorEmail(authentication.getName());
+		}
+
 		return ResponseEntity.ok(
-			pedidoService.listarPedidosComFiltros(unidadeId, clienteId, status, canalPedido, dataInicio, dataFim, pageable)
+			pedidoService.listarPedidosComFiltros(unidadeId, filtroClienteId, status, canalPedido, dataInicio, dataFim, pageable)
 		);
 	}
 
@@ -119,5 +136,24 @@ public class PedidoController {
 		Authentication authentication
 	) {
 		return ResponseEntity.ok(pedidoService.atualizarStatus(pedidoId, request.novoStatus(), authentication.getName()));
+	}
+
+	private Sort resolveSort(String sort) {
+		if (sort == null || sort.isBlank()) {
+			return Sort.by(Sort.Direction.DESC, "createdAt");
+		}
+
+		String[] chunks = sort.split(",");
+		String propriedade = chunks[0].trim();
+		if (propriedade.isBlank()) {
+			propriedade = "createdAt";
+		}
+
+		Sort.Direction direction = Sort.Direction.DESC;
+		if (chunks.length > 1) {
+			direction = "asc".equalsIgnoreCase(chunks[1].trim()) ? Sort.Direction.ASC : Sort.Direction.DESC;
+		}
+
+		return Sort.by(direction, propriedade);
 	}
 }

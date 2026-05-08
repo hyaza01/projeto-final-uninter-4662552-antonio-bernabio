@@ -83,6 +83,25 @@ class CatalogoEstoqueIntegrationTests {
 	}
 
 	@Test
+	void shouldListCardapioByUnidadeWithoutAuthentication() throws Exception {
+		EstoqueIds ids = findAnyEstoqueIds();
+
+		mockMvc.perform(get("/api/v1/unidades/{unidadeId}/cardapio", ids.unidadeId()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$").isArray())
+			.andExpect(jsonPath("$.length()").value(greaterThan(0)))
+			.andExpect(jsonPath("$[0].produtoId").isNumber())
+			.andExpect(jsonPath("$[0].disponivel").isBoolean())
+			.andExpect(jsonPath("$[0].quantidadeDisponivel").isNumber());
+	}
+
+	@Test
+	void shouldReturnNotFoundForCardapioWhenUnitDoesNotExist() throws Exception {
+		mockMvc.perform(get("/api/v1/unidades/{unidadeId}/cardapio", 999999L))
+			.andExpect(status().isNotFound());
+	}
+
+	@Test
 	void shouldRequireAuthenticationForStockEndpoint() throws Exception {
 		EstoqueIds ids = findAnyEstoqueIds();
 

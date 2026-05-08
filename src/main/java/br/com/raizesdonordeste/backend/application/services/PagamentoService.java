@@ -119,10 +119,13 @@ public class PagamentoService {
 
 		Pagamento salvo = pagamentoRepository.save(pagamento);
 		pedidoRepository.save(pedido);
+		String acaoAuditoria = mockResult.status() == StatusPagamento.APROVADO
+			? "PAGAMENTO_APROVADO"
+			: "PAGAMENTO_RECUSADO";
 
 		auditoriaService.registrar(
 			emailAutenticado,
-			"PAGAMENTO_PROCESSADO",
+			acaoAuditoria,
 			"Pedido",
 			pedido.getId(),
 			"statusPagamento=" + mockResult.status().name() + "; metodo=MOCK; codigoTransacao=" + mockResult.codigoTransacao()

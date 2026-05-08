@@ -7,9 +7,11 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +25,7 @@ public class GlobalExceptionHandler {
 		MethodArgumentNotValidException ex,
 		HttpServletRequest request
 	) {
-		List<ApiErrorDetail> details = ex.getBindingResult()
+		List<FieldErrorResponse> details = ex.getBindingResult()
 			.getFieldErrors()
 			.stream()
 			.map(this::toDetail)
@@ -44,9 +46,9 @@ public class GlobalExceptionHandler {
 		ConstraintViolationException ex,
 		HttpServletRequest request
 	) {
-		List<ApiErrorDetail> details = ex.getConstraintViolations()
+		List<FieldErrorResponse> details = ex.getConstraintViolations()
 			.stream()
-			.map(violation -> new ApiErrorDetail(violation.getPropertyPath().toString(), violation.getMessage()))
+			.map(violation -> new FieldErrorResponse(violation.getPropertyPath().toString(), violation.getMessage()))
 			.toList();
 
 		ApiErrorResponse body = ApiErrorFactory.build(
@@ -65,13 +67,58 @@ public class GlobalExceptionHandler {
 		HttpServletRequest request
 	) {
 		ApiErrorResponse body = ApiErrorFactory.build(
-			"VALIDATION_ERROR",
+			"BAD_REQUEST",
 			"Corpo da requisicao invalido.",
 			List.of(),
 			request
 		);
 
-		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ApiErrorResponse> handleMissingParameter(
+		MissingServletRequestParameterException ex,
+		HttpServletRequest request
+	) {
+		ApiErrorResponse body = ApiErrorFactory.build(
+			"BAD_REQUEST",
+			"Parametro obrigatorio ausente: " + ex.getParameterName(),
+			List.of(new FieldErrorResponse(ex.getParameterName(), "parametro obrigatorio")),
+			request
+		);
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+		MethodArgumentTypeMismatchException ex,
+		HttpServletRequest request
+	) {
+		ApiErrorResponse body = ApiErrorFactory.build(
+			"BAD_REQUEST",
+			"Parametro com tipo invalido: " + ex.getName(),
+			List.of(new FieldErrorResponse(ex.getName(), "tipo invalido")),
+			request
+		);
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+	}
+
+	@ExceptionHandler(BusinessException.class)
+	public ResponseEntity<ApiErrorResponse> handleBusinessException(
+		BusinessException ex,
+		HttpServletRequest request
+	) {
+		ApiErrorResponse body = ApiErrorFactory.build(
+			ex.getErrorCode(),
+			ex.getMessage(),
+			ex.getDetails(),
+			request
+		);
+
+		return ResponseEntity.status(ex.getStatus()).body(body);
 	}
 
 	@ExceptionHandler(ResponseStatusException.class)
@@ -107,10 +154,10 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
 	}
 
-	private ApiErrorDetail toDetail(FieldError fieldError) {
+	private FieldErrorResponse toDetail(FieldError fieldError) {
 		String field = fieldError.getField();
 		String message = fieldError.getDefaultMessage() == null ? "valor invalido" : fieldError.getDefaultMessage();
-		return new ApiErrorDetail(field, message);
+		return new FieldErrorResponse(field, message);
 	}
 
 	private String resolveErrorCode(HttpStatusCode statusCode) {
@@ -121,7 +168,8 @@ public class GlobalExceptionHandler {
 
 		return switch (status) {
 			case NOT_FOUND -> "NOT_FOUND";
-			case BAD_REQUEST, UNPROCESSABLE_ENTITY -> "VALIDATION_ERROR";
+			case BAD_REQUEST -> "BAD_REQUEST";
+			case UNPROCESSABLE_ENTITY -> "VALIDATION_ERROR";
 			case CONFLICT -> "CONFLICT";
 			case FORBIDDEN -> "FORBIDDEN";
 			case UNAUTHORIZED -> "UNAUTHORIZED";

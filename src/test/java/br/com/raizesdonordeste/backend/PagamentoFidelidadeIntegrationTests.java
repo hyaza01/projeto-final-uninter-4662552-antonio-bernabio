@@ -83,7 +83,7 @@ class PagamentoFidelidadeIntegrationTests {
 		assertEquals(1, movimentosSaida);
 
 		Integer auditoriasPagamento = jdbcTemplate.queryForObject(
-			"SELECT COUNT(*) FROM auditorias WHERE entidade = 'Pedido' AND entidade_id = ? AND acao = 'PAGAMENTO_PROCESSADO'",
+			"SELECT COUNT(*) FROM auditorias WHERE entidade = 'Pedido' AND entidade_id = ? AND acao = 'PAGAMENTO_APROVADO'",
 			Integer.class,
 			pedidoId
 		);

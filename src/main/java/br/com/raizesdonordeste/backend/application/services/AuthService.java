@@ -18,6 +18,7 @@ import br.com.raizesdonordeste.backend.api.dto.auth.UserResponse;
 import br.com.raizesdonordeste.backend.domain.enums.PerfilUsuario;
 import br.com.raizesdonordeste.backend.domain.model.Cliente;
 import br.com.raizesdonordeste.backend.domain.model.Usuario;
+import br.com.raizesdonordeste.backend.infrastructure.audit.AuditoriaService;
 import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.ClienteRepository;
 import br.com.raizesdonordeste.backend.infrastructure.persistence.repository.UsuarioRepository;
 import br.com.raizesdonordeste.backend.infrastructure.security.JwtService;
@@ -32,6 +33,7 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
 	private final JwtService jwtService;
+	private final AuditoriaService auditoriaService;
 
 	@Transactional
 	public UserResponse register(RegisterRequest request) {
@@ -58,7 +60,7 @@ public class AuthService {
 		return toUserResponse(salvo);
 	}
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public LoginResponse login(LoginRequest request) {
 		String emailNormalizado = normalizeEmail(request.email());
 
@@ -78,6 +80,15 @@ public class AuthService {
 		}
 
 		String token = jwtService.generateToken(usuario.getEmail(), usuario.getPerfil().name());
+
+		auditoriaService.registrar(
+			usuario.getEmail(),
+			"LOGIN_REALIZADO",
+			"Usuario",
+			usuario.getId(),
+			"perfil=" + usuario.getPerfil().name()
+		);
+
 		return new LoginResponse(token, "Bearer", toUserResponse(usuario));
 	}
 

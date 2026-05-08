@@ -180,6 +180,31 @@ class PedidoOperacionalIntegrationTests {
 		assertEquals(1, movimentosSaida);
 	}
 
+	@Test
+	void shouldFilterOrdersByCanalPedido() throws Exception {
+		String tokenCliente = registerClientAndGetToken();
+		String tokenGerente = createInternalUserAndGetToken(PerfilUsuario.GERENTE, "SenhaGerente@123");
+		EstoqueBase estoque = findAnyStockWithMinimum(5);
+
+		createOrderAndReturnId(tokenCliente, estoque.unidadeId(), estoque.produtoId(), 1, "APP");
+		createOrderAndReturnId(tokenCliente, estoque.unidadeId(), estoque.produtoId(), 1, "TOTEM");
+
+		MvcResult result = mockMvc.perform(get("/api/v1/pedidos")
+				.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenGerente)
+				.param("unidadeId", String.valueOf(estoque.unidadeId()))
+				.param("canalPedido", "TOTEM")
+				.param("page", "0")
+				.param("limit", "10"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.content.length()").value(greaterThanOrEqualTo(1)))
+			.andReturn();
+
+		JsonNode content = objectMapper.readTree(result.getResponse().getContentAsString(StandardCharsets.UTF_8)).get("content");
+		for (JsonNode pedido : content) {
+			assertEquals("TOTEM", pedido.get("canalPedido").asText());
+		}
+	}
+
 	private void processPayment(String token, Long pedidoId, boolean forcarAprovacao) throws Exception {
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("resultadoMock", forcarAprovacao ? "APROVADO" : "RECUSADO");
@@ -193,7 +218,11 @@ class PedidoOperacionalIntegrationTests {
 	}
 
 	private Long createOrderAndReturnId(String token, Long unidadeId, Long produtoId, int quantidade) throws Exception {
-		Map<String, Object> body = createOrderBody(unidadeId, produtoId, quantidade);
+		return createOrderAndReturnId(token, unidadeId, produtoId, quantidade, "APP");
+	}
+
+	private Long createOrderAndReturnId(String token, Long unidadeId, Long produtoId, int quantidade, String canalPedido) throws Exception {
+		Map<String, Object> body = createOrderBody(unidadeId, produtoId, quantidade, canalPedido);
 
 		MvcResult result = mockMvc.perform(post("/api/v1/pedidos")
 				.header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -206,10 +235,10 @@ class PedidoOperacionalIntegrationTests {
 		return json.get("id").asLong();
 	}
 
-	private Map<String, Object> createOrderBody(Long unidadeId, Long produtoId, int quantidade) {
+	private Map<String, Object> createOrderBody(Long unidadeId, Long produtoId, int quantidade, String canalPedido) {
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("unidadeId", unidadeId);
-		body.put("canalPedido", "APP");
+		body.put("canalPedido", canalPedido);
 		body.put("formaPagamento", "PIX");
 		body.put("itens", List.of(Map.of(
 			"produtoId", produtoId,

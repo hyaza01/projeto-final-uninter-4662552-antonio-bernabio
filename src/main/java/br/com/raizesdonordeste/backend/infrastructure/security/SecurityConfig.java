@@ -43,6 +43,7 @@ public class SecurityConfig {
 					"/api/v1/auth/register",
 					"/api/v1/auth/login",
 					"/api/v1/catalogo/**",
+					"/api/v1/unidades/*/cardapio",
 					"/swagger-ui/**",
 					"/swagger-ui.html",
 					"/v3/api-docs/**"
@@ -51,10 +52,18 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos/*/pagamentos/mock").hasRole("CLIENTE")
 				.requestMatchers(HttpMethod.POST, "/api/v1/pedidos/*/pagamento").hasRole("CLIENTE")
 				.requestMatchers(HttpMethod.GET, "/api/v1/pagamentos/*").hasAnyRole("CLIENTE", "ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
+				.requestMatchers(HttpMethod.POST, "/api/v1/estoque/movimentacoes").hasAnyRole("ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/estoque/*/movimentacoes").hasAnyRole("ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.POST, "/api/v1/promocoes").hasAnyRole("ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.PATCH, "/api/v1/promocoes/*/status").hasAnyRole("ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/promocoes").authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/v1/auditorias/**").hasAnyRole("ADMIN", "GERENTE")
 				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos/me/**").hasRole("CLIENTE")
 				.requestMatchers(HttpMethod.GET, "/api/v1/fidelidade/**").hasRole("CLIENTE")
 				.requestMatchers(HttpMethod.PATCH, "/api/v1/fidelidade/**").hasRole("CLIENTE")
-				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
+				.requestMatchers(HttpMethod.GET, "/api/v1/clientes/*/fidelidade/**").hasAnyRole("CLIENTE", "ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.PATCH, "/api/v1/clientes/*/fidelidade/**").hasAnyRole("CLIENTE", "ADMIN", "GERENTE")
+				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA", "CLIENTE")
 				.requestMatchers(HttpMethod.GET, "/api/v1/pedidos/unidade/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers(HttpMethod.PATCH, "/api/v1/pedidos/*/status").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")
 				.requestMatchers("/api/v1/estoque/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE", "COZINHA")

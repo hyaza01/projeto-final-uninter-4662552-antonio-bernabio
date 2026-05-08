@@ -1,0 +1,153 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity Usuario {
+  *id : bigint
+  --
+  nome : varchar
+  email : varchar
+  senha_hash : varchar
+  perfil : enum
+  ativo : boolean
+  created_at : timestamptz
+  updated_at : timestamptz
+}
+
+entity Cliente {
+  *id : bigint
+  --
+  usuario_id : bigint
+  consentimento_fidelidade : boolean
+  consentimento_fidelidade_atualizado_em : timestamptz
+  pontos_saldo : int
+  created_at : timestamptz
+  updated_at : timestamptz
+}
+
+entity Unidade {
+  *id : bigint
+  --
+  nome : varchar
+  cidade : varchar
+  bairro : varchar
+  endereco : varchar
+  ativa : boolean
+}
+
+entity Produto {
+  *id : bigint
+  --
+  nome : varchar
+  descricao : varchar
+  preco : numeric
+  categoria : enum
+  ativo : boolean
+}
+
+entity Estoque {
+  *id : bigint
+  --
+  unidade_id : bigint
+  produto_id : bigint
+  quantidade_atual : int
+  estoque_minimo : int
+}
+
+entity MovimentoEstoque {
+  *id : bigint
+  --
+  estoque_id : bigint
+  pedido_id : bigint?
+  tipo : enum
+  quantidade : int
+  motivo : varchar
+  created_at : timestamptz
+}
+
+entity Pedido {
+  *id : bigint
+  --
+  cliente_id : bigint
+  unidade_id : bigint
+  canal_pedido : enum
+  status : enum
+  forma_pagamento : enum
+  subtotal : numeric
+  total : numeric
+}
+
+entity PedidoItem {
+  *id : bigint
+  --
+  pedido_id : bigint
+  produto_id : bigint
+  quantidade : int
+  preco_unitario : numeric
+  subtotal : numeric
+}
+
+entity Pagamento {
+  *id : bigint
+  --
+  pedido_id : bigint
+  status : enum
+  metodo : enum
+  valor : numeric
+  payload_envio : text
+  payload_retorno : text
+  codigo_transacao_mock : varchar
+}
+
+entity FidelidadeHistorico {
+  *id : bigint
+  --
+  cliente_id : bigint
+  pedido_id : bigint?
+  tipo : enum
+  pontos : int
+  descricao : varchar
+  created_at : timestamptz
+}
+
+entity Promocao {
+  *id : bigint
+  --
+  nome : varchar
+  descricao : varchar
+  ativa : boolean
+  percentual_desconto : numeric
+  data_inicio : date
+  data_fim : date
+  produto_id : bigint?
+  unidade_id : bigint?
+}
+
+entity Auditoria {
+  *id : bigint
+  --
+  usuario_id : bigint?
+  acao : varchar
+  entidade : varchar
+  entidade_id : bigint
+  detalhes : text
+  ip_origem : varchar
+  created_at : timestamptz
+}
+
+Usuario ||--|| Cliente
+Cliente ||--o{ Pedido
+Unidade ||--o{ Pedido
+Pedido ||--o{ PedidoItem
+Produto ||--o{ PedidoItem
+Unidade ||--o{ Estoque
+Produto ||--o{ Estoque
+Estoque ||--o{ MovimentoEstoque
+Pedido ||--o{ MovimentoEstoque
+Pedido ||--|| Pagamento
+Cliente ||--o{ FidelidadeHistorico
+Pedido ||--o{ FidelidadeHistorico
+Produto ||--o{ Promocao
+Unidade ||--o{ Promocao
+Usuario ||--o{ Auditoria
+@enduml
