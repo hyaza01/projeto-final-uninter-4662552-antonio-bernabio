@@ -2,7 +2,7 @@
 
 API REST para operação de pedidos, pagamento mock, estoque, fidelidade, promoções e auditoria da rede **Raízes do Nordeste**.
 
-O projeto foi desenvolvido com foco em API REST, persistência em banco relacional, autenticação JWT, autorização por perfis, documentação Swagger/OpenAPI, testes automatizados e evidências reproduzíveis.
+O projeto foi desenvolvido com foco em API REST, persistência em banco relacional, autenticação JWT, autorização por perfis, documentação Swagger/OpenAPI, testes automatizados e execução reproduzível em ambiente local.
 
 ---
 
@@ -58,7 +58,7 @@ O fluxo principal implementado é:
 
 ## Requisitos para execução
 
-Antes de iniciar, instale:
+Antes de iniciar o projeto, a máquina precisa ter:
 
 - Git
 - JDK 21
@@ -66,36 +66,341 @@ Antes de iniciar, instale:
 - Docker Compose
 - Postman, opcional para executar a coleção de testes
 
-O Maven não precisa ser instalado manualmente, pois o projeto já inclui Maven Wrapper.
+O projeto possui **Maven Wrapper**, então não é obrigatório instalar Maven manualmente. O Maven Wrapper é executado pelos arquivos:
+
+```txt
+mvnw
+mvnw.cmd
+```
+
+No Windows, usa-se:
+
+```powershell
+.\mvnw.cmd
+```
+
+No Linux/macOS, usa-se:
+
+```bash
+./mvnw
+```
 
 ---
 
-## Preparação do ambiente
+## Preparação do ambiente no Windows
 
-No Windows e macOS, mantenha o Docker Desktop aberto antes de executar os comandos do projeto.
+### 1. Verificar Git
 
-Para confirmar a instalação das ferramentas, rode:
+Abra o PowerShell ou CMD e rode:
+
+```powershell
+git --version
+```
+
+Se o comando não for reconhecido, instale o Git e abra um novo terminal.
+
+---
+
+### 2. Verificar Java
+
+Rode:
+
+```powershell
+java -version
+```
+
+O resultado esperado deve indicar Java 21 ou versão compatível com o projeto:
+
+```txt
+openjdk version "21..."
+```
+
+Também verifique o compilador Java:
+
+```powershell
+javac -version
+```
+
+Resultado esperado:
+
+```txt
+javac 21...
+```
+
+---
+
+### 3. Erro comum: `java` não é reconhecido
+
+Se aparecer a mensagem:
+
+```txt
+'java' não é reconhecido como um comando interno
+ou externo, um programa operável ou um arquivo em lotes.
+```
+
+isso significa que o Java não está configurado corretamente no terminal do Windows.
+
+Mesmo que o projeto funcione dentro de uma IDE como IntelliJ, VS Code ou Spring Tools, o terminal pode não reconhecer o Java se o `JAVA_HOME` e o `Path` não estiverem configurados.
+
+---
+
+### 4. Instalar o JDK correto no Windows
+
+Baixe e instale um **JDK 21 para Windows x64**.
+
+Atenção: não use pacote Linux no Windows.
+
+Exemplo de pacote incorreto para Windows:
+
+```txt
+jdk-21_linux-x64_bin
+```
+
+Esse tipo de pacote não possui `java.exe` para Windows e não funcionará no CMD ou PowerShell.
+
+Use um instalador ou ZIP compatível com Windows, por exemplo:
+
+```txt
+JDK 21 Windows x64 MSI
+```
+
+ou:
+
+```txt
+JDK 21 Windows x64 ZIP
+```
+
+---
+
+### 5. Configurar JAVA_HOME
+
+Depois de instalar o JDK 21, configure a variável de ambiente `JAVA_HOME`.
+
+Exemplo de caminho correto:
+
+```txt
+C:\Program Files\Eclipse Adoptium\jdk-21
+```
+
+ou:
+
+```txt
+C:\Program Files\Java\jdk-21
+```
+
+ou, caso tenha extraído um ZIP:
+
+```txt
+C:\jdk-21
+```
+
+O `JAVA_HOME` deve apontar para a pasta principal do JDK, sem `\bin`.
+
+Correto:
+
+```txt
+C:\Program Files\Eclipse Adoptium\jdk-21
+```
+
+Errado:
+
+```txt
+C:\Program Files\Eclipse Adoptium\jdk-21\bin
+```
+
+---
+
+### 6. Adicionar Java ao Path
+
+Na variável de ambiente `Path`, adicione:
+
+```txt
+%JAVA_HOME%\bin
+```
+
+Depois disso, feche todos os terminais abertos e abra um novo PowerShell.
+
+---
+
+### 7. Conferir JAVA_HOME no PowerShell
+
+Rode:
+
+```powershell
+echo $env:JAVA_HOME
+```
+
+Depois verifique se existe o `java.exe`:
+
+```powershell
+dir "$env:JAVA_HOME\bin\java.exe"
+```
+
+Se o arquivo aparecer, o caminho está correto.
+
+Agora teste:
+
+```powershell
+java -version
+javac -version
+```
+
+---
+
+## Preparação do ambiente no Linux/macOS
+
+Verifique se as ferramentas estão instaladas:
 
 ```bash
 git --version
 java -version
+javac -version
 docker --version
 docker compose version
 ```
 
-Para verificar o Maven Wrapper no Linux/macOS:
+Se o Java não estiver instalado ou estiver em versão diferente, instale o JDK 21 e confira novamente:
 
 ```bash
-./mvnw --version
+java -version
+javac -version
 ```
 
-Para verificar o Maven Wrapper no Windows PowerShell:
+---
+
+## Docker e Docker Compose
+
+O projeto usa PostgreSQL em container Docker.
+
+No Windows e macOS, mantenha o **Docker Desktop aberto** antes de executar os comandos.
+
+Verifique:
+
+```bash
+docker --version
+docker compose version
+```
+
+Valide se o Docker está funcionando:
+
+```bash
+docker ps
+```
+
+Se o Docker não estiver aberto, o comando pode retornar erro de conexão com o Docker Engine.
+
+---
+
+## Maven Wrapper
+
+O projeto já inclui Maven Wrapper. Portanto, o Maven não precisa ser instalado manualmente.
+
+Para verificar no Windows PowerShell, entre na pasta do projeto e rode:
 
 ```powershell
 .\mvnw.cmd --version
 ```
 
-Caso algum comando não seja reconhecido, instale ou configure a ferramenta correspondente antes de continuar.
+No Linux/macOS:
+
+```bash
+./mvnw --version
+```
+
+O comando deve mostrar a versão do Maven usada pelo Wrapper e a versão do Java.
+
+---
+
+## Erro comum: `mvnw.cmd` não encontrado
+
+Se o comando abaixo falhar:
+
+```powershell
+.\mvnw.cmd --version
+```
+
+confira se você está dentro da pasta do projeto.
+
+No Windows:
+
+```powershell
+dir mvnw.cmd
+```
+
+Se o arquivo aparecer, rode novamente:
+
+```powershell
+.\mvnw.cmd --version
+```
+
+Se não aparecer, entre na pasta correta do projeto.
+
+Exemplo:
+
+```powershell
+cd "C:\Users\SeuUsuario\Desktop\projeto-final-uninter-4662552-antonio-bernabio"
+dir mvnw.cmd
+```
+
+---
+
+## Instalação manual do Maven, opcional
+
+A instalação manual do Maven só é necessária se você quiser usar o comando `mvn` diretamente ou se houver algum problema específico com o Maven Wrapper.
+
+### 1. Baixar e extrair o Maven
+
+Extraia o ZIP para uma pasta simples, por exemplo:
+
+```txt
+C:\apache-maven-3.9.9
+```
+
+Dentro da pasta deve existir:
+
+```txt
+C:\apache-maven-3.9.9\bin\mvn.cmd
+```
+
+### 2. Configurar MAVEN_HOME
+
+Crie a variável de ambiente:
+
+```txt
+MAVEN_HOME
+```
+
+Com o valor:
+
+```txt
+C:\apache-maven-3.9.9
+```
+
+### 3. Adicionar Maven ao Path
+
+Na variável `Path`, adicione:
+
+```txt
+%MAVEN_HOME%\bin
+```
+
+Feche e abra novamente o terminal.
+
+### 4. Verificar Maven
+
+Rode:
+
+```powershell
+mvn -version
+```
+
+O resultado deve mostrar o Maven e o Java 21.
+
+Mesmo com Maven instalado, a forma recomendada para este projeto continua sendo o Maven Wrapper:
+
+```powershell
+.\mvnw.cmd clean test
+```
 
 ---
 
@@ -154,7 +459,7 @@ JWT_EXPIRATION_MINUTES=60
 SEED_TEST_USERS_ENABLED=true
 ```
 
-Para executar localmente, copie o arquivo de exemplo:
+Para executar localmente, copie o arquivo de exemplo.
 
 ### Windows PowerShell
 
@@ -823,6 +1128,108 @@ Relacionamentos principais:
 
 ## Solução de problemas comuns
 
+### Java não reconhecido no terminal
+
+Erro:
+
+```txt
+'java' não é reconhecido como um comando interno
+ou externo, um programa operável ou um arquivo em lotes.
+```
+
+Causas prováveis:
+
+- JDK não instalado.
+- JDK instalado, mas sem `JAVA_HOME`.
+- `%JAVA_HOME%\bin` não está no `Path`.
+- Terminal foi aberto antes da configuração.
+- Foi baixado um JDK de Linux para usar no Windows.
+
+Solução:
+
+1. Instale o JDK 21 para Windows x64.
+2. Configure `JAVA_HOME`.
+3. Adicione `%JAVA_HOME%\bin` ao `Path`.
+4. Abra um novo terminal.
+5. Rode:
+
+```cmd
+java -version
+javac -version
+```
+
+---
+
+### JAVA_HOME apontando para pacote Linux
+
+Exemplo de caminho incorreto no Windows:
+
+```txt
+C:\Users\Usuario\Desktop\jdk-21_linux-x64_bin\jdk-21.0.11
+```
+
+Esse pacote é para Linux e não deve ser usado no Windows.
+
+Use um JDK 21 Windows x64, com caminho parecido com:
+
+```txt
+C:\Program Files\Eclipse Adoptium\jdk-21
+```
+
+ou:
+
+```txt
+C:\Program Files\Java\jdk-21
+```
+
+---
+
+### Maven não reconhecido
+
+O Maven não precisa estar instalado, pois o projeto usa Maven Wrapper.
+
+Use:
+
+```powershell
+.\mvnw.cmd --version
+```
+
+Se quiser instalar Maven manualmente, configure:
+
+```txt
+MAVEN_HOME=C:\apache-maven-3.9.9
+```
+
+e adicione ao `Path`:
+
+```txt
+%MAVEN_HOME%\bin
+```
+
+Depois abra um novo terminal e teste:
+
+```powershell
+mvn -version
+```
+
+---
+
+### `mvnw.cmd` não encontrado
+
+Entre na pasta correta do projeto e verifique se o arquivo existe:
+
+```powershell
+dir mvnw.cmd
+```
+
+Depois rode:
+
+```powershell
+.\mvnw.cmd --version
+```
+
+---
+
 ### Docker não reconhecido
 
 Verifique se o Docker Desktop está instalado e em execução:
@@ -832,9 +1239,25 @@ docker --version
 docker compose version
 ```
 
+---
+
+### Docker Compose falha ao ler o arquivo
+
+Valide o arquivo:
+
+```bash
+docker compose config
+```
+
+Se houver erro, verifique se o arquivo `docker-compose.yml` está com indentação correta e não está salvo em uma única linha.
+
+---
+
 ### Porta 5432 ocupada
 
 Altere `DB_PORT` no arquivo `.env` ou pare o serviço local que está usando a porta.
+
+---
 
 ### Banco com dados antigos
 
@@ -844,6 +1267,8 @@ Execute:
 docker compose down -v
 docker compose up -d
 ```
+
+---
 
 ### API não sobe
 
@@ -875,13 +1300,19 @@ Para validar o funcionamento completo do projeto em ambiente local:
 
 ```txt
 1. Clonar o repositório.
-2. Copiar .env.example para .env.
-3. Subir PostgreSQL com Docker Compose.
-4. Rodar os testes automatizados.
-5. Iniciar a API.
-6. Abrir o health check.
-7. Abrir o Swagger.
-8. Importar a coleção Postman.
-9. Executar o fluxo Pedido → Pagamento mock → Atualização de status.
-10. Executar cenários negativos de autenticação, autorização, validação e regra de negócio.
+2. Verificar Git.
+3. Verificar Java 21 com java -version e javac -version.
+4. Verificar Docker e Docker Compose.
+5. Entrar na pasta correta do projeto.
+6. Verificar Maven Wrapper com .\mvnw.cmd --version ou ./mvnw --version.
+7. Copiar .env.example para .env.
+8. Validar docker-compose.yml com docker compose config.
+9. Subir PostgreSQL com Docker Compose.
+10. Rodar os testes automatizados.
+11. Iniciar a API.
+12. Abrir o health check.
+13. Abrir o Swagger.
+14. Importar a coleção Postman.
+15. Executar o fluxo Pedido → Pagamento mock → Atualização de status.
+16. Executar cenários negativos de autenticação, autorização, validação e regra de negócio.
 ```
