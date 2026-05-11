@@ -23,7 +23,7 @@ O projeto foi desenvolvido com foco em API REST, persistência em banco relacion
 
 O sistema implementa uma API Back-end para uma rede de lanchonetes em expansão, contemplando atendimento multicanal, gestão de pedidos, controle de estoque por unidade, pagamento mock, fidelidade, promoções e auditoria.
 
-O fluxo crítico implementado é:
+O fluxo principal implementado é:
 
 1. Cliente autentica com JWT.
 2. Cliente consulta o cardápio por unidade.
@@ -60,12 +60,42 @@ O fluxo crítico implementado é:
 
 Antes de iniciar, instale:
 
+- Git
 - JDK 21
 - Docker
 - Docker Compose
-- Git
+- Postman, opcional para executar a coleção de testes
 
-O Maven Wrapper já está incluído no projeto, portanto não é necessário instalar Maven manualmente.
+O Maven não precisa ser instalado manualmente, pois o projeto já inclui Maven Wrapper.
+
+---
+
+## Preparação do ambiente
+
+No Windows e macOS, mantenha o Docker Desktop aberto antes de executar os comandos do projeto.
+
+Para confirmar a instalação das ferramentas, rode:
+
+```bash
+git --version
+java -version
+docker --version
+docker compose version
+```
+
+Para verificar o Maven Wrapper no Linux/macOS:
+
+```bash
+./mvnw --version
+```
+
+Para verificar o Maven Wrapper no Windows PowerShell:
+
+```powershell
+.\mvnw.cmd --version
+```
+
+Caso algum comando não seja reconhecido, instale ou configure a ferramenta correspondente antes de continuar.
 
 ---
 
@@ -319,78 +349,77 @@ src/test/
 
 ### Auth
 
-```txt
-POST /api/v1/auth/register
-POST /api/v1/auth/login
-GET  /api/v1/auth/me
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| POST | `/api/v1/auth/register` | Cadastrar usuário cliente |
+| POST | `/api/v1/auth/login` | Autenticar usuário e retornar token JWT |
+| GET | `/api/v1/auth/me` | Consultar dados do usuário autenticado |
 
 ### Catálogo e unidades
 
-```txt
-GET /api/v1/catalogo/produtos
-GET /api/v1/catalogo/produtos/{produtoId}
-GET /api/v1/unidades/{unidadeId}/cardapio
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| GET | `/api/v1/catalogo/produtos` | Listar produtos do catálogo |
+| GET | `/api/v1/catalogo/produtos/{produtoId}` | Consultar produto por identificador |
+| GET | `/api/v1/unidades/{unidadeId}/cardapio` | Consultar cardápio de uma unidade |
 
 ### Estoque
 
-```txt
-GET  /api/v1/estoque/unidades/{unidadeId}
-GET  /api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}
-POST /api/v1/estoque/movimentacoes
-GET  /api/v1/estoque/{estoqueId}/movimentacoes
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| GET | `/api/v1/estoque/unidades/{unidadeId}` | Consultar estoque de uma unidade |
+| GET | `/api/v1/estoque/unidades/{unidadeId}/produtos/{produtoId}` | Consultar estoque de um produto em uma unidade |
+| POST | `/api/v1/estoque/movimentacoes` | Registrar entrada ou saída manual de estoque |
+| GET | `/api/v1/estoque/{estoqueId}/movimentacoes` | Consultar histórico de movimentações de um estoque |
 
 ### Pedidos
 
-```txt
-POST  /api/v1/pedidos
-GET   /api/v1/pedidos/me
-GET   /api/v1/pedidos/me/{pedidoId}
-GET   /api/v1/pedidos?canalPedido=&status=&unidadeId=&clienteId=&page=&limit=&sort=
-GET   /api/v1/pedidos/unidade/{unidadeId}
-PATCH /api/v1/pedidos/{pedidoId}/status
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| POST | `/api/v1/pedidos` | Criar pedido |
+| GET | `/api/v1/pedidos/me` | Listar pedidos do cliente autenticado |
+| GET | `/api/v1/pedidos/me/{pedidoId}` | Consultar pedido próprio por identificador |
+| GET | `/api/v1/pedidos?canalPedido=&status=&unidadeId=&clienteId=&page=&limit=&sort=` | Consultar pedidos com filtros operacionais |
+| GET | `/api/v1/pedidos/unidade/{unidadeId}` | Consultar pedidos de uma unidade |
+| PATCH | `/api/v1/pedidos/{pedidoId}/status` | Atualizar status operacional do pedido |
 
 ### Pagamentos
 
-```txt
-POST /api/v1/pedidos/{pedidoId}/pagamentos/mock
-GET  /api/v1/pagamentos/{pagamentoId}
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| POST | `/api/v1/pedidos/{pedidoId}/pagamentos/mock` | Processar pagamento simulado |
+| GET | `/api/v1/pagamentos/{pagamentoId}` | Consultar pagamento por identificador |
 
 ### Fidelidade
 
-```txt
-GET   /api/v1/fidelidade/me
-GET   /api/v1/fidelidade/me/historico
-PATCH /api/v1/fidelidade/me/consentimento
-
-GET   /api/v1/clientes/{clienteId}/fidelidade/saldo
-GET   /api/v1/clientes/{clienteId}/fidelidade/historico
-PATCH /api/v1/clientes/{clienteId}/fidelidade/consentimento
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| GET | `/api/v1/fidelidade/me` | Consultar saldo de fidelidade do cliente autenticado |
+| GET | `/api/v1/fidelidade/me/historico` | Consultar histórico de fidelidade do cliente autenticado |
+| PATCH | `/api/v1/fidelidade/me/consentimento` | Atualizar consentimento de fidelidade do cliente autenticado |
+| GET | `/api/v1/clientes/{clienteId}/fidelidade/saldo` | Consultar saldo de fidelidade por cliente |
+| GET | `/api/v1/clientes/{clienteId}/fidelidade/historico` | Consultar histórico de fidelidade por cliente |
+| PATCH | `/api/v1/clientes/{clienteId}/fidelidade/consentimento` | Atualizar consentimento de fidelidade por cliente |
 
 ### Promoções
 
-```txt
-POST  /api/v1/promocoes
-GET   /api/v1/promocoes
-PATCH /api/v1/promocoes/{id}/status
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| POST | `/api/v1/promocoes` | Criar promoção |
+| GET | `/api/v1/promocoes` | Listar promoções |
+| PATCH | `/api/v1/promocoes/{id}/status` | Alterar status de promoção |
 
 ### Auditoria
 
-```txt
-GET /api/v1/auditorias?entidade=&entidadeId=&acao=&usuarioId=&page=&limit=
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| GET | `/api/v1/auditorias?entidade=&entidadeId=&acao=&usuarioId=&page=&limit=` | Consultar registros de auditoria com filtros |
 
 ### Health
 
-```txt
-GET /api/v1/health
-```
+| Método | Rota | Finalidade |
+|---|---|---|
+| GET | `/api/v1/health` | Verificar se a API está no ar |
 
 ---
 
